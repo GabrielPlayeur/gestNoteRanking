@@ -15,17 +15,17 @@ function addRanking() {
     for (let i = 0; i < gradesDiv.length; i++) {
         if (gradesDiv[i].id.includes("bonus")){
             bonusGradesCounter++;
-            continue
+            continue;
         }
         if (gradesDiv[i].innerHTML == "-") {
-            continue
+            continue;
         }
         let grades = allGrades[i-bonusGradesCounter];
         let studentGrade = parseFloat(gradesDiv[i].innerHTML);
         let rank = getPersonnalRank(grades, studentGrade);
 
         if (grades.length == 0 || rank == -1) {
-            continue
+            return ;
         }
 
         let p = document.createElement("p");
@@ -33,7 +33,7 @@ function addRanking() {
         p.style.float = "left";
         p.style.paddingLeft = "5px";
         p.innerHTML = `${rank}/${grades.length}`;
-        gradesDiv[i].parentNode.after(p)
+        gradesDiv[i].parentNode.after(p);
     }
 }
 
