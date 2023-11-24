@@ -1,16 +1,48 @@
-function getAllGrades() {
-    var script = document.getElementsByTagName("script")[9].innerHTML.split(".setValues(");
-    var allGrades = Array();
-    for (let i = 1; i < script.length; i++) {
-        let evaluationGrades = script[i].split(").setNote(")[0];
-        allGrades.push(JSON.parse(evaluationGrades.replace(/'/g,'"')));
+function getSemesterId() {
+    var maq = document.getElementById("maq");
+    var semesterId = maq.options[maq.selectedIndex].value;
+    return semesterId;
+}
+
+function getDepartementId() {
+    var dpt = document.getElementById('dpt');
+    var departementId = dpt.getAttribute("value");
+    return departementId;
+}
+
+function getAllSemesterGrades(data) {
+    var query = data.querySelectorAll("addhelp");
+    var allGrades = {};
+    for (let i = 0; i < query.length; i++) {
+        var id = query[i].getAttribute("key");
+        if (!id.includes("note")){
+            continue;
+        }
+        var grade = query[i].getAttribute("exec").split(".setValues(")[1].split(").setNote(")[0];
+        allGrades[id] = JSON.parse(grade.replace(/'/g,'"'));
     }
     return allGrades;
 }
 
-function addRanking() {
+function getSemesterRanking() {
+    var url = "https://scolarite.polytech.univ-nantes.fr/gestnote/"
+    var fct = "bulletin";
+    var maqId = getSemesterId();
+    var dptId = getDepartementId();
+    var urlVar = `${url}?fct=${fct}&maq=${maqId}&dpt=${dptId}`;
+    fetch(urlVar, {
+	    method: 'get'
+    })
+    .then(response => response.text())
+    .then(str => new window.DOMParser().parseFromString(str, "text/xml"))
+    .then(data =>{
+        var allGrades = getAllSemesterGrades(data);
+        displayRank(allGrades);
+    });
+}
+
+function displayRank(allGrades) {
     var gradesDiv = document.getElementsByClassName("noteNotModified");
-    var allGrades = getAllGrades();
     var bonusGradesCounter = 0;
     for (let i = 0; i < gradesDiv.length; i++) {
         if (gradesDiv[i].id.includes("bonus")){
@@ -20,7 +52,7 @@ function addRanking() {
         if (gradesDiv[i].innerHTML == "-") {
             continue;
         }
-        let grades = allGrades[i-bonusGradesCounter];
+        let grades = allGrades[gradesDiv[i].id];
         let studentGrade = parseFloat(gradesDiv[i].innerHTML);
         let rank = getPersonnalRank(grades, studentGrade);
 
@@ -43,9 +75,9 @@ function getPersonnalRank(grades, studentGrade) {
 }
 
 document.onchange = function () {
-    addRanking();
+    getSemesterRanking();
 }
 
 setTimeout(() => {
-    addRanking();
+    getSemesterRanking();
   }, "1000");
