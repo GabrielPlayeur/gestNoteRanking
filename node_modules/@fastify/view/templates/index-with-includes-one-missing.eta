@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head></head>
+  <body>
+    <%~ include('fragment-header.eta') %>
+    <%~ include('fragment-content-not-existing.eta') %>
+    <p><%= it.text %></p>
+    <%~ include('fragment-footer.html') %>
+  </body>
+</html>
