@@ -1,11 +1,27 @@
-async function getRank(req, res) {
-  try {
-    res.send(req.params)
-  } catch (error) {
-    res.status(500).send('Internal Server Error')
-  }
-}
+const ranksModel = require('../../db/models/ranks')
 
-module.exports = {
-  getRank,
-}
+const getAllRank = async (req, res) => {
+  try {
+
+    const result = await ranksModel.find({});
+
+    res.status(200).json({ result });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ msg: error.message });
+  }
+};
+
+const getRank = async (req, res) => {
+  try {
+    const hash = req.params.hash
+    const result = await ranksModel.find({hash: hash});
+
+    res.status(200).json({ result });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ msg: error.message });
+  }
+};
+
+module.exports = {getRank, getAllRank}
