@@ -71,7 +71,9 @@ function displayRank(allGrades) {
 
 function getPersonnalRank(grades, studentGrade) {
     grades.sort(function(a,b) { return b - a;});
-    return grades.indexOf(studentGrade)+1, grades.lastIndexOf(studentGrade)+1;
+    let firstIndex = grades.indexOf(studentGrade);
+    let lastIndex = grades.lastIndexOf(studentGrade);
+    return [firstIndex + 1, lastIndex - firstIndex + 1];
 }
 
 document.onchange = function () {
