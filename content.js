@@ -54,7 +54,7 @@ function displayRank(allGrades) {
         }
         let grades = allGrades[gradesDiv[i].id];
         let studentGrade = parseFloat(gradesDiv[i].innerHTML);
-        let rank = getPersonnalRank(grades, studentGrade);
+        let [rank, numberOfSameNotes] = getPersonnalRank(grades, studentGrade);
 
         if (grades.length == 0 || rank == -1) {
             return ;
@@ -64,14 +64,16 @@ function displayRank(allGrades) {
         p.style.margin = "0px";
         p.style.float = "left";
         p.style.paddingLeft = "5px";
-        p.innerHTML = `${rank}/${grades.length}`;
+        p.innerHTML = `${rank}/${grades.length} [${numberOfSameNotes}]`;
         gradesDiv[i].parentNode.after(p);
     }
 }
 
 function getPersonnalRank(grades, studentGrade) {
     grades.sort(function(a,b) { return b - a;});
-    return grades.indexOf(studentGrade)+1;
+    let firstIndex = grades.indexOf(studentGrade);
+    let lastIndex = grades.lastIndexOf(studentGrade);
+    return [firstIndex + 1, lastIndex - firstIndex + 1];
 }
 
 document.onchange = function () {
