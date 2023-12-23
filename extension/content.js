@@ -83,8 +83,8 @@ function getPersonnalRank(grades, studentGrade) {
     return [firstIndex + 1, lastIndex - firstIndex + 1];
 }
 
-function getGlobalRank(){
-    var url = "http://localhost:5000/ranking/test";
+async function getGlobalRank(){
+    var url = `http://localhost:5000/ranking/${await generateHash()}`;
     fetch(url, {
 	    method: 'get'
     })
@@ -102,7 +102,7 @@ function displayGlobalRank(rank, total) {
 
 async function updateGlobalRank(){
     const url = "http://localhost:5000/update"
-    var hash = await generateHash(getUserName(), getYear(), getSemesterId(),getDepartementId())
+    var hash = await generateHash()
     const data = {
         hash: hash,
         year: getYear(),
@@ -132,8 +132,8 @@ async function updateGlobalRank(){
       });
 }
 
-async function generateHash(name, years, maquette, departement) {
-    const data = `${name}${years}${maquette}${departement}`;
+async function generateHash() {
+    const data = `${getUserName()}${getYear()}${getSemesterId()}${getDepartementId()}`;
     const encoder = new TextEncoder();
     const dataBuffer = encoder.encode(data);
     const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
