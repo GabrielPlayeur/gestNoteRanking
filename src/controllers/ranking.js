@@ -15,7 +15,11 @@ const getAllRank = async (req, res) => {
 const getRank = async (req, res) => {
   try {
     const hash = req.params.hash
-    const result = await ranksModel.find({hash: hash});
+    const result = await ranksModel.findOne({hash: hash});
+    if (result==null) {
+      res.status(404).json("The resource with the specified 'hash' was not found.");
+      return
+    }
 
     res.status(200).json({ result });
   } catch (error) {
