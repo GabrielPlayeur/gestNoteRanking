@@ -10,6 +10,15 @@ function getDepartementId() {
     return departementId;
 }
 
+function getUserName() {
+    return document.getElementById('evalnumber').parentElement.parentElement.parentElement.lastElementChild.innerText
+}
+
+function getYear() {
+    var maq = document.getElementById('maq');
+    return Number(maq[maq.selectedIndex].innerText.split('/')[0]);
+}
+
 function getAllSemesterGrades(data) {
     var query = data.querySelectorAll("addhelp");
     var allGrades = {};
@@ -91,6 +100,48 @@ function displayGlobalRank(rank, total) {
     avg.innerHTML = `${avg.innerText} <br/> ${rank}/${total} `
 }
 
+async function updateGlobalRank(){
+    const url = "http://localhost:5000/update"
+    var hash = await generateHash(getUserName(), getYear(), getSemesterId(),getDepartementId())
+    const data = {
+        hash: hash,
+        year: getYear(),
+        maquette: getSemesterId(),
+        departement: getDepartementId(),
+        grade: document.getElementById("avg").innerText
+    };
+
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Response data:', data);
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+}
+
+async function generateHash(name, years, maquette, departement) {
+    const data = `${name}${years}${maquette}${departement}`;
+    const encoder = new TextEncoder();
+    const dataBuffer = encoder.encode(data);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
+    return hashHex;
+}
+
 document.onchange = function () {
     getSemesterRanking();
     getGlobalRank();
@@ -98,5 +149,6 @@ document.onchange = function () {
 
 setTimeout(() => {
     getSemesterRanking(),
-    getGlobalRank()
+    getGlobalRank(),
+    updateGlobalRank()
   }, "1000");
