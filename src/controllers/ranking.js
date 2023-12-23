@@ -15,13 +15,18 @@ const getAllRank = async (req, res) => {
 const getRank = async (req, res) => {
   try {
     const hash = req.params.hash
-    const result = await ranksModel.findOne({hash: hash});
-    if (result==null) {
+    const user = await ranksModel.findOne({hash: hash});
+
+    if (user==null) {
       res.status(404).json("The resource with the specified 'hash' was not found.");
       return
     }
 
-    res.status(200).json({ result });
+    const filter = {year: user.year, maquette: user.maquette, departement : user.departement};
+    const result = await ranksModel.find(filter).sort({ grade: -1 });
+    const userIndex = result.findIndex(u => u.hash === hash);
+
+    res.status(200).json({ "rank": userIndex+1, "total": result.length });
   } catch (error) {
     console.error(error);
     res.status(500).json({ msg: error.message });
