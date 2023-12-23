@@ -43,10 +43,8 @@ function getSemesterRanking() {
 
 function displayRank(allGrades) {
     var gradesDiv = document.getElementsByClassName("noteNotModified");
-    var bonusGradesCounter = 0;
     for (let i = 0; i < gradesDiv.length; i++) {
         if (gradesDiv[i].id.includes("bonus")){
-            bonusGradesCounter++;
             continue;
         }
         if (gradesDiv[i].innerHTML == "-") {
@@ -76,10 +74,29 @@ function getPersonnalRank(grades, studentGrade) {
     return [firstIndex + 1, lastIndex - firstIndex + 1];
 }
 
+function getGlobalRank(){
+    var url = "http://localhost:5000/ranking/test";
+    fetch(url, {
+	    method: 'get'
+    })
+    .then(response => response.text())
+    .then(str => JSON.parse(str))
+    .then(data => {
+        displayGlobalRank(data.rank, data.total);
+    })
+}
+
+function displayGlobalRank(rank, total) {
+    var avg = document.getElementById("avg");
+    avg.innerHTML = `${avg.innerText} <br/> ${rank}/${total} `
+}
+
 document.onchange = function () {
     getSemesterRanking();
+    getGlobalRank();
 }
 
 setTimeout(() => {
-    getSemesterRanking();
+    getSemesterRanking(),
+    getGlobalRank()
   }, "1000");
