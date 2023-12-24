@@ -19,6 +19,10 @@ function getYear() {
     return Number(maq[maq.selectedIndex].innerText.split('/')[0]);
 }
 
+function getGlobalGrade() {
+    return document.getElementById("avg").innerText.split('\n')[0];
+}
+
 function getAllSemesterGrades(data) {
     var query = data.querySelectorAll("addhelp");
     var allGrades = {};
@@ -97,7 +101,7 @@ async function getGlobalRank(){
 
 function displayGlobalRank(rank, total) {
     var avg = document.getElementById("avg");
-    avg.innerHTML = `${avg.innerText} <br/> ${rank}/${total} `
+    avg.innerHTML = `${getGlobalGrade()} <br/> ${rank}/${total}`
 }
 
 async function updateGlobalRank(){
@@ -108,9 +112,8 @@ async function updateGlobalRank(){
         year: getYear(),
         maquette: getSemesterId(),
         departement: getDepartementId(),
-        grade: document.getElementById("avg").innerText
+        grade: getGlobalGrade()
     };
-
     fetch(url, {
       method: 'POST',
       headers: {
@@ -142,13 +145,24 @@ async function generateHash() {
     return hashHex;
 }
 
+async function runGlobalRanking() {
+    const agree = localStorage.getItem('allow')==="true";
+    if (!agree) return
+    await updateGlobalRank();
+    await getGlobalRank();
+}
+
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+    localStorage.setItem('allow', request.allow);
+    runGlobalRanking()
+});
+
 document.onchange = function () {
     getSemesterRanking();
-    getGlobalRank();
+    runGlobalRanking();
 }
 
 setTimeout(() => {
     getSemesterRanking(),
-    getGlobalRank(),
-    updateGlobalRank()
+    runGlobalRanking()
   }, "1000");

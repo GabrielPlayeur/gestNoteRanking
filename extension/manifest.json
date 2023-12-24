@@ -4,14 +4,27 @@
     "name": "GestNote Ranking",
     "version": "0.2.0",
     "description": "For Polytech Nantes students, display their ranking alongside their grades.",
+    "permissions": [
+      "activeTab",
+      "storage",
+      "tabs"
+    ],
+    "action": {
+      "default_popup": "popup.html",
+      "default_icon": {
+        "16": "icon.png",
+        "48": "icon.png",
+        "128": "icon.png"
+      }
+    },
     "icons": {
       "16": "icon.png",
       "48": "icon.png",
      "128": "icon.png"
    },
     "content_scripts": [{
-      "css": ["styles.css"],
       "js": ["content.js"],
+      "persistent": true,
       "run_at" : "document_idle",
       "matches": ["https://scolarite.polytech.univ-nantes.fr/*"]
     }]
