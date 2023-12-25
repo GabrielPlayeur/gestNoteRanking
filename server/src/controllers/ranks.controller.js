@@ -69,7 +69,7 @@ const postUpdate = async (req, res) => {
     const savedData = await createUser(hash, year, maquette, departement, grade);
     res.status(201).json(savedData);
   } catch (error) {
-    res.status(500).send('Internal Server Error');
+    res.status(500).send({ msg: error.message });
   }
 }
 
@@ -105,9 +105,19 @@ async function createUser(hash, year, maquette, departement, grade) {
   return savedData;
 }
 
+const deleteUser = async (req, res) => {
+  try {
+    const user = await ranksModel.findOneAndDelete({hash: req.params.hash});
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).send({ msg: error.message });
+  }
+}
+
 module.exports = {
   getRank,
   getAllRanks,
   postUpdate,
   validateUpdateRequestBody,
+  deleteUser,
 };

@@ -4,7 +4,7 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "dev": "node --watch --trace-warnings src/index.js",
+    "dev": "node --watch --trace-warnings src/server.js",
     "test": "cross-env NODE_ENV=test jest --testTimeout=5000",
     "start": "node src/server.js"
   },
