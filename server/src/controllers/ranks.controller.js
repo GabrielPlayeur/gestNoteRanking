@@ -1,4 +1,4 @@
-const ranksModel = require('../../db/models/ranks.model')
+const ranksModel = require('../models/ranks.model')
 const { body, validationResult } = require('express-validator');
 
 /**
@@ -67,7 +67,7 @@ const postUpdate = async (req, res) => {
       return res.status(200).json(savedData);
     }
     const savedData = await createUser(hash, year, maquette, departement, grade);
-    res.status(200).json({ savedData });
+    res.status(201).json(savedData);
   } catch (error) {
     res.status(500).send('Internal Server Error');
   }

@@ -5,7 +5,7 @@ const {
     getRank,
     validateUpdateRequestBody,
     postUpdate,
-} = require('../controllers/ranking');
+} = require('../controllers/ranks.controller');
 
 router.get('/ranks', getAllRanks);
 router.get('/ranks/:hash', getRank);
