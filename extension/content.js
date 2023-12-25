@@ -71,14 +71,45 @@ function displayRank(allGrades) {
             return ;
         }
 
-        let p = document.createElement("p");
-        p.style.margin = "0px";
-        p.style.float = "left";
-        p.style.paddingLeft = "5px";
-        p.innerHTML = `${rank}/${grades.length} [${numberOfSameNotes}]`;
-        gradesDiv[i].parentNode.after(p);
+        // Create a new div element
+        let element = document.createElement("div");
+        element.className = "item";
+        
+        // Add the position and the percentage of the student
+        if (numberOfSameNotes > 1) {
+            element.innerHTML = `<div class='rank'>${rank+numberOfSameNotes-1}-${rank}/${grades.length}</div>
+                                 <div class='pourcent'>${Math.round((rank+numberOfSameNotes-1)/grades.length*10000)/100}-${Math.round(rank/grades.length*10000)/100}%</div>`
+
+        } else {
+            element.innerHTML = `<div class='rank'>${rank}/${grades.length}</div>
+                                 <div class='pourcent'>${Math.round(rank/grades.length*10000)/100}%</div>`
+        }
+
+        gradesDiv[i].parentNode.after(element);
     }
+
+    // Add the event listener to display the percentage
+    var items = document.querySelectorAll('.item');
+
+    items.forEach(function(item) {
+        let pourcent = item.querySelector('.pourcent');
+        let rank = item.querySelector('.rank');
+
+        // Hide the percentage by default
+        pourcent.style.display = 'none';
+
+        // Add the event listener
+        item.addEventListener('mouseover', function() {
+            pourcent.style.display = 'inline';
+            rank.style.display = 'none';
+        });
+        item.addEventListener('mouseout', function() {
+            pourcent.style.display = 'none';
+            rank.style.display = 'inline';
+        });
+    });
 }
+
 
 function getPersonnalRank(grades, studentGrade) {
     grades.sort(function(a,b) { return b - a;});
