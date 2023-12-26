@@ -74,11 +74,14 @@ function displayRank(allGrades) {
         // Create a new div element
         let element = document.createElement("div");
         element.className = "item";
-        
+        element.style.margin = "0px";
+        element.style.float = "left";
+        element.style.paddingLeft = "5px";
+
         // Add the position and the percentage of the student
         if (numberOfSameNotes > 1) {
-            element.innerHTML = `<div class='rank'>${rank+numberOfSameNotes-1}-${rank}/${grades.length}</div>
-                                 <div class='pourcent'>${Math.round((rank+numberOfSameNotes-1)/grades.length*10000)/100}-${Math.round(rank/grades.length*10000)/100}%</div>`
+            element.innerHTML = `<div class='rank'>${rank}-${rank+numberOfSameNotes-1}/${grades.length}</div>
+                                 <div class='pourcent'>${Math.round(rank/grades.length*10000)/100}-${Math.round((rank+numberOfSameNotes-1)/grades.length*10000)/100}%</div>`
 
         } else {
             element.innerHTML = `<div class='rank'>${rank}/${grades.length}</div>
@@ -175,9 +178,13 @@ async function generateHash() {
     return hashHex;
 }
 
+function removeGlobalRanking() {
+    document.getElementById("avg").innerText = getGlobalGrade();
+}
+
 async function runGlobalRanking() {
     const agree = localStorage.getItem('allow')==="true";
-    if (!agree) return
+    if (!agree) return removeGlobalRanking();
     await updateGlobalRank();
     await getGlobalRank();
 }
