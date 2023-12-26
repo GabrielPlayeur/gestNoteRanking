@@ -110,7 +110,6 @@ function displayRank(allGrades) {
     });
 }
 
-
 function getPersonnalRank(grades, studentGrade) {
     grades.sort(function(a,b) { return b - a;});
     let firstIndex = grades.indexOf(studentGrade);
@@ -119,7 +118,7 @@ function getPersonnalRank(grades, studentGrade) {
 }
 
 async function getGlobalRank(){
-    var url = `http://localhost:5000/ranking/${await generateHash()}`;
+    var url = `http://localhost:5000/api/ranks/${await generateHash()}`;
     fetch(url, {
 	    method: 'get'
     })
@@ -136,7 +135,7 @@ function displayGlobalRank(rank, total) {
 }
 
 async function updateGlobalRank(){
-    const url = "http://localhost:5000/update"
+    const url = "http://localhost:5000/api/ranks"
     var hash = await generateHash()
     const data = {
         hash: hash,
