@@ -57,59 +57,44 @@ function getSemesterRanking() {
 function displayRank(allGrades) {
     var gradesDiv = document.getElementsByClassName("noteNotModified");
     for (let i = 0; i < gradesDiv.length; i++) {
-        if (gradesDiv[i].id.includes("bonus")){
-            continue;
-        }
-        if (gradesDiv[i].innerHTML == "-") {
-            continue;
-        }
+        if (gradesDiv[i].id.includes("bonus")) continue;
+        if (gradesDiv[i].innerHTML == "-") continue;
         let grades = allGrades[gradesDiv[i].id];
-        let studentGrade = parseFloat(gradesDiv[i].innerHTML);
-        let [rank, numberOfSameNotes] = getPersonnalRank(grades, studentGrade);
-
-        if (grades.length == 0 || rank == -1) {
-            return ;
-        }
-
-        // Create a new div element
-        let element = document.createElement("div");
-        element.className = "item";
-        element.style.margin = "0px";
-        element.style.float = "left";
-        element.style.paddingLeft = "5px";
-
-        // Add the position and the percentage of the student
-        if (numberOfSameNotes > 1) {
-            element.innerHTML = `<div class='rank'>${rank}-${rank+numberOfSameNotes-1}/${grades.length}</div>
-                                 <div class='pourcent'>${Math.round(rank/grades.length*10000)/100}-${Math.round((rank+numberOfSameNotes-1)/grades.length*10000)/100}%</div>`
-
-        } else {
-            element.innerHTML = `<div class='rank'>${rank}/${grades.length}</div>
-                                 <div class='pourcent'>${Math.round(rank/grades.length*10000)/100}%</div>`
-        }
-
-        gradesDiv[i].parentNode.after(element);
+        let userGrade = parseFloat(gradesDiv[i].innerHTML);
+        let [rank, numberOfSameNotes] = getPersonnalRank(grades, userGrade);
+        if (grades.length == 0 || rank == -1) return;
+        gradesDiv[i].parentNode.after(createDivForDisplay(grades, rank, numberOfSameNotes));
     }
-
-    // Add the event listener to display the percentage
     var items = document.querySelectorAll('.item');
+    items.forEach(item => addDivListener(item));
+}
 
-    items.forEach(function(item) {
-        let pourcent = item.querySelector('.pourcent');
-        let rank = item.querySelector('.rank');
+function createDivForDisplay(grades, rank, numberOfSameNotes){
+    let element = document.createElement("div");
+    element.className = "item";
+    element.style.margin = "0px";
+    element.style.float = "left";
+    element.style.paddingLeft = "5px";
+    element.innerHTML = `<div class='rank'>${rank}/${grades.length}</div>
+                        <div class='pourcent'>${Math.round(rank/grades.length*10000)/100}%</div>`;
+    if (numberOfSameNotes > 1) {
+        element.innerHTML = `<div class='rank'>${rank}-${rank+numberOfSameNotes-1}/${grades.length}</div>
+                             <div class='pourcent'>${Math.round(rank/grades.length*10000)/100}-${Math.round((rank+numberOfSameNotes-1)/grades.length*10000)/100}%</div>`;
+    }
+    return element
+}
 
-        // Hide the percentage by default
+function addDivListener(item) {
+    let pourcent = item.querySelector('.pourcent');
+    let rank = item.querySelector('.rank');
+    pourcent.style.display = 'none';
+    item.addEventListener('mouseover', function() {
+        pourcent.style.display = 'inline';
+        rank.style.display = 'none';
+    });
+    item.addEventListener('mouseout', function() {
         pourcent.style.display = 'none';
-
-        // Add the event listener
-        item.addEventListener('mouseover', function() {
-            pourcent.style.display = 'inline';
-            rank.style.display = 'none';
-        });
-        item.addEventListener('mouseout', function() {
-            pourcent.style.display = 'none';
-            rank.style.display = 'inline';
-        });
+        rank.style.display = 'inline';
     });
 }
 
