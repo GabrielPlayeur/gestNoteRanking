@@ -1,3 +1,5 @@
+const URL_SERVER = "https://gestnote-ranking.onrender.com"
+
 function getSemesterId() {
     var maq = document.getElementById("maq");
     var semesterId = maq.options[maq.selectedIndex].value;
@@ -106,7 +108,7 @@ function getPersonnalRank(grades, studentGrade) {
 }
 
 async function getGlobalRank(){
-    var url = `http://localhost:5000/api/ranks/${await generateHash()}`;
+    var url = `${URL_SERVER}/api/ranks/${await generateHash()}`;
     fetch(url, {
 	    method: 'get'
     })
@@ -123,7 +125,7 @@ function displayGlobalRank(rank, total) {
 }
 
 async function updateGlobalRank(){
-    const url = "http://localhost:5000/api/ranks"
+    const url = `${URL_SERVER}/api/ranks`
     var hash = await generateHash()
     const data = {
         hash: hash,
