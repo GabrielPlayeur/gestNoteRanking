@@ -5,6 +5,7 @@
     "version": "1.0.1",
     "description": "For Polytech Nantes students, display their ranking alongside their grades.",
     "permissions": [
+      "activeTab",
       "storage"
     ],
     "action": {
