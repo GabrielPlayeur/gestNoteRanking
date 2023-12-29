@@ -6,8 +6,7 @@
     "description": "For Polytech Nantes students, display their ranking alongside their grades.",
     "permissions": [
       "activeTab",
-      "storage",
-      "tabs"
+      "storage"
     ],
     "action": {
       "default_popup": "popup.html",

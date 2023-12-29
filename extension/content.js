@@ -148,7 +148,7 @@ async function updateGlobalRank(){
         return response.json();
       })
       .then(data => {
-        console.log('Response data:', data);
+        // console.log('Response data:', data);
       })
       .catch(error => {
         console.error('Error:', error);
