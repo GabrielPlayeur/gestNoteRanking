@@ -2,10 +2,9 @@
     "manifest_version": 3,
 
     "name": "GestNote Ranking",
-    "version": "0.2.0",
+    "version": "1.0.1",
     "description": "For Polytech Nantes students, display their ranking alongside their grades.",
     "permissions": [
-      "activeTab",
       "storage"
     ],
     "action": {

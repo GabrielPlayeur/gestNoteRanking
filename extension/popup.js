@@ -3,30 +3,21 @@ document.addEventListener('DOMContentLoaded', function () {
     const savedState = localStorage.getItem('allow');
     const powerUp = document.getElementById('powerup');
     const downgrade = document.getElementById('downgrade');
-
     chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
         if (tabs.length > 0) {
-          // Récupérez l'URL du premier onglet actif
           let activeTabUrl = tabs[0].url;
           if (activeTabUrl.includes("https://scolarite.polytech.univ-nantes.fr/")) {
-
-            // annuller la desactivation
             downgrade.style.opacity = '0';
             document.getElementById("placeholder").style.display = "none";
             document.getElementById("main").style.justifyContent = "space-evenly";
             document.getElementById("title").style.marginBlockEnd = "0px";
-            
-            
             let hidden = document.getElementsByClassName("hidden");
             for (let i = 0; i < hidden.length; i++) {
                 hidden[i].style.display = "block";
             }
-
-            // Récupérez l'état enregistré et mettez à jour l'élément d'interface utilisateur
             if (savedState) {
                 toggle.checked = savedState === 'true';
             }
-        
             sendState(toggle);
           }
         }
@@ -36,22 +27,18 @@ document.addEventListener('DOMContentLoaded', function () {
     toggle.addEventListener('change', function() {
         if (this.checked) {
             powerUp.style.transition = 'bottom .6s ease-in-out';
-            powerUp.style.visibility = 'visible'
+            powerUp.style.visibility = 'visible';
             powerUp.style.bottom = '400px';
-
             downgrade.style.opacity = '0';
-            
         } else {
             powerUp.style.transition = 'none';
-            powerUp.style.visibility = 'hidden'
+            powerUp.style.visibility = 'hidden';
             powerUp.style.bottom = '-100px';
-
             downgrade.style.opacity = '1';
             setTimeout(function() {
                 downgrade.style.opacity = '0';
             }, 400);
         }
-
         sendState(toggle);
     });
 })
