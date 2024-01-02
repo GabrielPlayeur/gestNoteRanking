@@ -197,7 +197,7 @@ function createInformationText(agree){
     state.style.color = agree == true ? "green" : "red";
     state.style.fontWeight = "bold";
     var textHelp = document.createElement('span');
-    textHelp.innerHTML = "</br>Vous pouvez modifier ce paramètre en accédant à l'onglet Extension dans le coin supérieur droit de votre navigateur."
+    textHelp.innerHTML = "</br>Vous pouvez modifier ce paramètre depuis l'extension GestNote Ranking en accédant à l'onglet Extensions dans le coin supérieur droit de votre navigateur."
     var textUsers = document.createElement('span');
     textUsers.innerHTML = "</br>Votre classement est affiché en fonction des autres étudiants qui ont accepté de partager leur moyenne."
     var textTime = document.createElement('span');
