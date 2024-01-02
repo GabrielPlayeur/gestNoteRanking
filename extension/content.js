@@ -169,8 +169,52 @@ function removeGlobalRanking() {
     document.getElementById("avg").innerText = getGlobalGrade();
 }
 
+function updateInformationText(agree){
+    var informationText = document.getElementById('informationText');
+    if (informationText!=null){
+        informationText.innerHTML = createInformationText(agree);
+        return;
+    }
+    var informationText = createInformationDiv(agree);
+    var noteTab = document.getElementById('notetab');
+    noteTab.before(informationText);
+}
+
+function createInformationDiv(agree){
+    var informationDiv = document.createElement('div');
+    informationDiv.id = "informationText";
+    informationDiv.style.fontStyle = "italic";
+    informationDiv.style.marginBottom = "15px";
+    informationDiv.innerHTML = createInformationText(agree);
+    return informationDiv;
+}
+
+function createInformationText(agree){
+    var textStart = document.createElement('span');
+    textStart.innerText = "Partage de la moyenne: ";
+    var state = document.createElement('span');
+    state.innerText = agree == true ? "ACTIVE" : "DESACTIVE";
+    state.style.color = agree == true ? "green" : "red";
+    state.style.fontWeight = "bold";
+    var textHelp = document.createElement('span');
+    textHelp.innerHTML = "</br>Vous pouvez modifier ce paramètre en accédant à l'onglet Extension dans le coin supérieur droit de votre navigateur."
+    var textUsers = document.createElement('span');
+    textUsers.innerHTML = "</br>Votre classement est affiché en fonction des autres étudiants qui ont accepté de partager leur moyenne."
+    var textTime = document.createElement('span');
+    textTime.innerHTML = "</br>L'apparition du classement peut prendre un certain temps. Nous vous demandons d'être patient."
+    var div = document.createElement('div');
+    div.appendChild(textStart);
+    div.appendChild(state);
+    div.appendChild(textHelp);
+    div.appendChild(textUsers);
+    div.appendChild(textTime);
+    return div.innerHTML;
+}
+
 async function runGlobalRanking() {
     const agree = localStorage.getItem('allow')==="true";
+    console.log(agree);
+    updateInformationText(agree);
     if (!agree) return removeGlobalRanking();
     await updateGlobalRank();
     await getGlobalRank();
@@ -178,7 +222,7 @@ async function runGlobalRanking() {
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     localStorage.setItem('allow', request.allow);
-    runGlobalRanking()
+    runGlobalRanking();
 });
 
 document.onchange = function () {
