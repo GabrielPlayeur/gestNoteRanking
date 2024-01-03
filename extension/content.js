@@ -213,7 +213,6 @@ function createInformationText(agree){
 
 async function runGlobalRanking() {
     const agree = localStorage.getItem('allow')==="true";
-    console.log(agree);
     updateInformationText(agree);
     if (!agree) return removeGlobalRanking();
     await updateGlobalRank();
