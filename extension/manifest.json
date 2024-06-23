@@ -21,7 +21,7 @@
      "128": "icon.png"
    },
     "content_scripts": [{
-      "js": ["content.js"],
+      "js": ["content.js", "d3.v7.min.js", "histogram.js"],
       "persistent": true,
       "run_at" : "document_idle",
       "matches": ["https://scolarite.polytech.univ-nantes.fr/*"]
