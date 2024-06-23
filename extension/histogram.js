@@ -1,4 +1,3 @@
-// initialisation de l'encart de l'histogramme -------------------------------------
 const graphContainer = document.createElement('div');
 graphContainer.style.position = 'absolute';
 graphContainer.style.display = 'none';
@@ -15,17 +14,15 @@ graphContainer.addEventListener('mouseout', function() {
     hideHistogram();
 });
 
-
-// initialisation du pointer helper -----------------------------------------------
 const pointerHelper = document.createElementNS("http://www.w3.org/2000/svg", "svg");
 pointerHelper.style.position = 'absolute';
 pointerHelper.id = 'pointerHelper';
 pointerHelper.style.display = 'none';
 
 const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-// polygon.style.fill = 'transparent';
+polygon.style.fill = 'transparent';
 // bleu transparent
-polygon.style.fill = 'rgba(110, 164, 213, 0.7)';
+// polygon.style.fill = 'rgba(110, 164, 213, 0.7)';
 
 pointerHelper.appendChild(polygon);
 
@@ -39,8 +36,6 @@ polygon.addEventListener('mouseout', function() {
     hideHistogram();
 });
 
-
-// Mise à jour de la position du pointer helper -------------------------------------
 function updatePointerHelperPosition(itemPosition, graphContainerPosition) {
     pointerHelper.style.display = 'block';
 
@@ -62,7 +57,7 @@ function updatePointerHelperPosition(itemPosition, graphContainerPosition) {
         pointerHelper.style.top = `${itemPosition.bottom + window.scrollY}px`;
         pointerHelper.style.height = `${graphContainerPosition.bottom - itemPosition.bottom}px`;
         pointerHelper.style.width = `${itemPosition.right - graphContainerPosition.left}px`;
-        
+
         let pointerHelperWidth = parseFloat(pointerHelper.style.width);
         let pointerHelperHeight = parseFloat(pointerHelper.style.height);
 
@@ -70,10 +65,6 @@ function updatePointerHelperPosition(itemPosition, graphContainerPosition) {
     }
 }
 
-
-
-
-// Fonctions pour afficher l'histogramme -------------------------------------
 function showHistogram(event, grades, userGrade, itemPosition) {
     const svgWidth = 240, svgHeight = 135;
     const margin = { top: 10, right: -5, bottom: 10, left: 25 };
@@ -100,7 +91,7 @@ function showHistogram(event, grades, userGrade, itemPosition) {
     const xScale = d3.scaleLinear() // Echelle linéaire pour les notes de 0 à 20 avec un pas de 0.25
         .domain([0, 80])
         .range([margin.left, width]);
-    
+
     // les éléments se superposent par ordre d'apparition dans le code
 
     // POURCENTAGE DE REUSSITE - Visuel -------------------------------------
@@ -156,8 +147,6 @@ function showHistogram(event, grades, userGrade, itemPosition) {
         .attr('transform', 'translate(-0.5,0)')
         .attr('fill', "url(#svgGradient)");
 
-
-
     // HISOGRAMME DES NOTES -------------------------------------
 
     // Donnees de l'histogramme
@@ -168,7 +157,6 @@ function showHistogram(event, grades, userGrade, itemPosition) {
 
     let median = d3.median(grades);
     let mean = d3.mean(grades); 
-
 
     // Echelle verticale
     let yScale = d3.scaleLinear()
@@ -184,8 +172,6 @@ function showHistogram(event, grades, userGrade, itemPosition) {
     svg.append("g")
         .attr("transform", `translate( ${margin.left}, 0)`)
         .call(d3.axisLeft(yScale).ticks(3));
-
-
 
     // Création des barres de l'histogramme
     let bars = svg.selectAll("rect.histogram")
@@ -216,7 +202,6 @@ function showHistogram(event, grades, userGrade, itemPosition) {
         .attr("transform", d => `translate( ${xScale(d.x0)-1.5} , ${yScale(d.length) - 0.5} )`)
         .attr("height", d => height - yScale(d.length));
 
-    
     // hitbox plus large pour le mouseover des barres de l'histogramme
     let barsHelper = svg.selectAll('rect.histogramHelper')
         .data(histogramData)
@@ -234,10 +219,7 @@ function showHistogram(event, grades, userGrade, itemPosition) {
         })
         .on('mouseout', hideTooltip);
 
-
-
-    // Dessins sous l'axe x -------------------------------------       
-
+    // Dessins sous l'axe x -------------------------------------
     // Curseur moyenne
     svg.append('rect')
         .attr('x', xScale(mean.toFixed(2)*4) - 0.5)
@@ -249,7 +231,6 @@ function showHistogram(event, grades, userGrade, itemPosition) {
         .delay(mean*4*5)
         .attr('height', 7.5);
 
-    
     // Mouseover trasparent pour le pourcentage de réussite 
     svg.selectAll('rect.percentageTooltip')
         .data(d3.range(81))  // Crée un tableau de 0 à 20 avec un pas de 0.25
@@ -268,17 +249,12 @@ function showHistogram(event, grades, userGrade, itemPosition) {
             showTooltip(event, tooltipText);
         })
         .on('mouseout', hideTooltip);
-    
-
 
     // APPEL DU POLYGONE POINTER HELPER -------------------------------------
     graphContainerPosition = graphContainer.getBoundingClientRect();
-
     updatePointerHelperPosition(itemPosition, graphContainerPosition);
 
-
     // Fonctions de fonctionnement de l'histogramme -------------------------------------
-
     function getPercentageAboveGrade(grade, grades) {
         let normalizedGrade = grades.map(g => {
             return Math.round(g*4)/4;
@@ -317,7 +293,6 @@ function showHistogram(event, grades, userGrade, itemPosition) {
             .remove();
     }
 }
-
 
 function hideHistogram() {
     graphContainer.style.display = 'none';
