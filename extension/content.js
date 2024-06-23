@@ -65,13 +65,13 @@ function displayRank(allGrades) {
         let userGrade = parseFloat(gradesDiv[i].innerHTML);
         let [rank, numberOfSameNotes] = getPersonnalRank(grades, userGrade);
         if (grades.length == 0 || rank == -1) return;
-        gradesDiv[i].parentNode.after(createDivForDisplay(grades, rank, numberOfSameNotes));
+        gradesDiv[i].parentNode.after(createDivForDisplay(grades, userGrade, rank, numberOfSameNotes));
     }
     var items = document.querySelectorAll('.item');
     items.forEach(item => addDivListener(item));
 }
 
-function createDivForDisplay(grades, rank, numberOfSameNotes){
+function createDivForDisplay(grades, userGrade, rank, numberOfSameNotes){
     let element = document.createElement("div");
     element.className = "item";
     element.style.margin = "0px";
@@ -83,6 +83,12 @@ function createDivForDisplay(grades, rank, numberOfSameNotes){
         element.innerHTML = `<div class='rank'>${rank}-${rank+numberOfSameNotes-1}/${grades.length}</div>
                              <div class='pourcent'>${Math.round(rank/grades.length*10000)/100}-${Math.round((rank+numberOfSameNotes-1)/grades.length*10000)/100}%</div>`;
     }
+
+    element.addEventListener('mouseover', function(event) {
+        let itemPosition = element.getBoundingClientRect();
+        showHistogram(event, grades, userGrade, itemPosition);
+    });
+
     return element
 }
 
@@ -97,6 +103,7 @@ function addDivListener(item) {
     item.addEventListener('mouseout', function() {
         pourcent.style.display = 'none';
         rank.style.display = 'inline';
+        hideHistogram();
     });
 }
 
