@@ -2,13 +2,13 @@ const URL_SERVER = "https://gestnote-ranking.onrender.com"
 
 function getSemesterId() {
     var maq = document.getElementById("maq");
-    var semesterId = maq.options[maq.selectedIndex].value;
+    var semesterId = maq.tagName==='SELECT' ? maq.options[maq.selectedIndex].value:maq.getAttribute("value");
     return semesterId;
 }
 
 function getDepartementId() {
     var dpt = document.getElementById('dpt');
-    var departementId = dpt.getAttribute("value");
+    var departementId = dpt.tagName==='SELECT' ? dpt.options[dpt.selectedIndex].value:dpt.getAttribute("value");
     return departementId;
 }
 
@@ -18,11 +18,13 @@ function getUserName() {
 
 function getYear() {
     var maq = document.getElementById('maq');
-    return Number(maq[maq.selectedIndex].innerText.split('/')[0]);
+    var fullYear = maq.tagName==='SELECT' ? maq[maq.selectedIndex].innerText:maq.innerText;
+    return Number(fullYear.split('/')[0]);
 }
 
 function getGlobalGrade() {
-    return document.getElementById("avg").innerText.split('\n')[0];
+    var avg = document.getElementById("avg").innerText.split('\n')[0];
+    return isNaN(avg) || avg.trim() === '' ? '0' : avg;
 }
 
 function getAllSemesterGrades(data) {
@@ -220,7 +222,6 @@ function createInformationText(agree){
 
 async function runGlobalRanking() {
     const agree = localStorage.getItem('allow')==="true";
-    console.log(agree);
     updateInformationText(agree);
     if (!agree) return removeGlobalRanking();
     await updateGlobalRank();
