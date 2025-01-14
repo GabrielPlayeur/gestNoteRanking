@@ -151,7 +151,7 @@ function showHistogram(event, grades, userGrade, itemPosition) {
 
     // Donnees de l'histogramme
     let histogramData = d3.histogram()
-        .domain(xScale.domain())
+        .domain([0,81])
         .thresholds(xScale.ticks(80)) // répartition en 80 intervalles
         (grades.map(g => Math.round(g*4)));
 
