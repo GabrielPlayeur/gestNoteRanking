@@ -1,5 +1,6 @@
 const ranksModel = require('../models/ranks.model')
 const { body, validationResult } = require('express-validator');
+const crypto = require('crypto');
 
 /**
  * It's an asynchronous function that uses the rank model to find all users and then
@@ -55,11 +56,29 @@ const validateUpdateRequestBody = [
  */
 const postUpdate = async (req, res) => {
   try {
+    // Lire dynamiquement la clé HMAC à chaque appel (pour compatibilité avec dotenv en test)
+    const HMAC_SECRET = process.env.GESTNOTE_SECRET;
+    if (!HMAC_SECRET) {
+      console.error('HMAC_SECRET is undefined!');
+      return res.status(500).json({ error: 'Server HMAC secret misconfigured' });
+    }
+    const signature = req.get('X-GestNote-Signature');
+    const payload = JSON.stringify(req.body);
+    const expectedSignature = crypto.createHmac('sha256', HMAC_SECRET).update(payload).digest('hex');
+    if (signature !== expectedSignature) {
+      return res.status(401).json({ error: 'Signature HMAC invalide' });
+    }
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
     const { hash, year, maquette, departement, grade } = req.body;
+    // Validation stricte des données
+    if ( isNaN(year) || isNaN(maquette) || isNaN(departement) || isNaN(grade) ||
+      Number(grade) < 0 || Number(grade) > 20
+    ) {
+      return res.status(400).json({ error: "Invalid data" });
+    }
     const filter = {hash: hash, year: year, maquette: maquette, departement : departement};
     const doesUserExit = await ranksModel.exists(filter);
     if (doesUserExit) {
@@ -69,6 +88,7 @@ const postUpdate = async (req, res) => {
     const savedData = await createUser(hash, year, maquette, departement, grade);
     res.status(201).json(savedData);
   } catch (error) {
+    console.error('POST /api/ranks error:', error);
     res.status(500).send({ msg: error.message });
   }
 }

@@ -143,12 +143,16 @@ async function updateGlobalRank(){
         departement: getDepartementId(),
         grade: getGlobalGrade()
     };
+    const payload = JSON.stringify(data);
+    const signature = await generateHMACSignature(payload);
     fetch(url, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-GestNote-Signature': signature,
+        'User-Agent': 'GestNoteRanking/1.0.0'
       },
-      body: JSON.stringify(data)
+      body: payload
     })
       .then(response => {
         if (!response.ok) {
@@ -162,6 +166,18 @@ async function updateGlobalRank(){
       .catch(error => {
         console.error('Error:', error);
       });
+}
+
+async function generateHMACSignature(payload) {
+    const encoder = new TextEncoder();
+    const keyData = encoder.encode('658e02624f38c792ac9a97f2');
+    const cryptoKey = await window.crypto.subtle.importKey(
+        'raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+    );
+    const signatureBuffer = await window.crypto.subtle.sign(
+        'HMAC', cryptoKey, encoder.encode(payload)
+    );
+    return Array.from(new Uint8Array(signatureBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 async function generateHash() {
