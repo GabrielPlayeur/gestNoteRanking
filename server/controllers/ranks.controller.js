@@ -56,7 +56,6 @@ const validateUpdateRequestBody = [
  */
 const postUpdate = async (req, res) => {
   try {
-    // Lire dynamiquement la clé HMAC à chaque appel (pour compatibilité avec dotenv en test)
     const HMAC_SECRET = process.env.GESTNOTE_SECRET;
     if (!HMAC_SECRET) {
       console.error('HMAC_SECRET is undefined!');
@@ -73,7 +72,6 @@ const postUpdate = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
     const { hash, year, maquette, departement, grade } = req.body;
-    // Validation stricte des données
     if ( isNaN(year) || isNaN(maquette) || isNaN(departement) || isNaN(grade) ||
       Number(grade) < 0 || Number(grade) > 20
     ) {
@@ -100,7 +98,7 @@ const postUpdate = async (req, res) => {
  * @param filter - The data to reconize the user.
  */
 async function updateUser(grade, filter) {
-  const update = { grade: grade };
+  const update = { grade: grade, updatedAt: Date.now() };
   const savedData = await ranksModel.findOneAndUpdate(filter, update, { new: true });
   return savedData;
 }
@@ -119,7 +117,8 @@ async function createUser(hash, year, maquette, departement, grade) {
     year: year,
     maquette: maquette,
     departement : departement,
-    grade: grade
+    grade: grade,
+    updatedAt: Date.now(),
   });
   const savedData = await newData.save();
   return savedData;

@@ -21,6 +21,11 @@ const ranksSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.Decimal128,
     required: true,
   },
+  updatedAt: {
+    type: Date,
+    default: Date.now,
+    required: false,
+  },
 });
 
 const ranksModel = mongoose.model('ranks', ranksSchema);

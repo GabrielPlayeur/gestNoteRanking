@@ -145,12 +145,19 @@ async function updateGlobalRank(){
     };
     const payload = JSON.stringify(data);
     const signature = await generateHMACSignature(payload);
+    // Récupère dynamiquement la version depuis le manifest
+    let extensionVersion = '1.0.0';
+    try {
+        const manifest = await fetch(chrome.runtime.getURL('manifest.json')).then(r => r.json());
+        extensionVersion = manifest.version;
+    } catch (e) {}
+    const userAgent = `GestNoteRanking/${extensionVersion}`;
     fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-GestNote-Signature': signature,
-        'User-Agent': 'GestNoteRanking/1.0.0'
+        'User-Agent': userAgent
       },
       body: payload
     })
