@@ -65,21 +65,31 @@ function updatePointerHelperPosition(itemPosition, graphContainerPosition) {
     }
 }
 
-function showHistogram(event, grades, userGrade, itemPosition) {
+function showHistogram(event, grades, userGrade, itemPosition, isGlobal = false) {
     const svgWidth = 240, svgHeight = 135;
     const margin = { top: 10, right: -5, bottom: 10, left: 25 };
     const width = svgWidth - margin.left - margin.right;
     const height = svgHeight - margin.top - margin.bottom;
 
-    // si le graphContainer dépasse de la fenêtre, on le décale
-    const rightEdge = event.pageX + svgWidth;
-    if (rightEdge > document.documentElement.clientWidth) {
-        graphContainer.style.left = `${event.pageX - svgWidth}px`;
+    if (isGlobal) {
+        const rightPosition = itemPosition.right + window.scrollX + 5;
+        if (rightPosition + svgWidth > document.documentElement.clientWidth + window.scrollX) {
+            graphContainer.style.left = `${itemPosition.left + window.scrollX - svgWidth - 5}px`;
+        } else {
+            graphContainer.style.left = `${rightPosition}px`;
+        }
+        const elementCenterY = itemPosition.top + (itemPosition.height / 2);
+        const histogramCenterY = elementCenterY - 2*(svgHeight / 2);
+        graphContainer.style.top = `${histogramCenterY + window.scrollY}px`;
     } else {
-        graphContainer.style.left = `${event.pageX}px`;
+        const rightEdge = event.pageX + svgWidth;
+        if (rightEdge > document.documentElement.clientWidth) {
+            graphContainer.style.left = `${event.pageX - svgWidth}px`;
+        } else {
+            graphContainer.style.left = `${event.pageX}px`;
+        }
+        graphContainer.style.top = `${itemPosition.bottom + window.scrollY + 3}px`;
     }
-
-    graphContainer.style.top = `${itemPosition.bottom + window.scrollY + 3}px`;
     graphContainer.style.display = 'block';
     graphContainer.innerHTML = '';
 
@@ -252,7 +262,11 @@ function showHistogram(event, grades, userGrade, itemPosition) {
 
     // APPEL DU POLYGONE POINTER HELPER -------------------------------------
     graphContainerPosition = graphContainer.getBoundingClientRect();
-    updatePointerHelperPosition(itemPosition, graphContainerPosition);
+    
+    // Pour l'histogramme global, ne pas afficher le pointer helper
+    if (!isGlobal) {
+        updatePointerHelperPosition(itemPosition, graphContainerPosition);
+    }
 
     // Fonctions de fonctionnement de l'histogramme -------------------------------------
     function getPercentageAboveGrade(grade, grades) {

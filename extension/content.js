@@ -1,5 +1,4 @@
 const URL_SERVER = "https://gestnote-ranking.onrender.com"
-// const URL_SERVER = "http://127.0.0.1:5000"
 const globalExtensionVersion = '1.0.7';
 
 function getSemesterId() {
@@ -132,7 +131,7 @@ async function getGlobalRank(){
     .then(str => JSON.parse(str))
     .then(data => {
         if (data.rank && data.total) {
-            displayGlobalRank(data.rank, data.total);
+            displayGlobalRank(data.rank, data.total, data.grades);
         }
     })
     .catch(error => {
@@ -141,9 +140,29 @@ async function getGlobalRank(){
     });
 }
 
-function displayGlobalRank(rank, total) {
+function displayGlobalRank(rank, total, grades = null) {
     var avg = document.getElementById("avg");
-    avg.innerHTML = `${getGlobalGrade()} <br/> ${rank}/${total}`
+    const gradeText = getGlobalGrade();
+    const rankText = `${rank}/${total}`;
+    if (grades && grades.length > 0) {
+        avg.innerHTML = `${gradeText} <br/> <span class="global-rank-clickable" style="cursor: pointer; text-decoration: underline;">${rankText}</span>`;
+        const clickableElement = avg.querySelector('.global-rank-clickable');
+        if (clickableElement) {
+            clickableElement.addEventListener('click', function(event) {
+                const userGrade = parseFloat(gradeText) || 0;
+                const itemPosition = clickableElement.getBoundingClientRect();
+                showHistogram(event, grades, userGrade, itemPosition, true);
+            });
+            clickableElement.addEventListener('mouseover', function(event) {
+                const userGrade = parseFloat(gradeText) || 0;
+                const itemPosition = clickableElement.getBoundingClientRect();
+                showHistogram(event, grades, userGrade, itemPosition, true);
+            });
+        }
+    } else {
+        // Affichage simple sans histogramme
+        avg.innerHTML = `${gradeText} <br/> ${rankText}`;
+    }
 }
 
 async function updateGlobalRank(){
@@ -176,9 +195,8 @@ async function updateGlobalRank(){
       })
       .then(data => {
         // console.log('Response data:', data);
-        // Utiliser les données de classement directement de la réponse POST
         if (data.rank && data.total) {
-          displayGlobalRank(data.rank, data.total);
+          displayGlobalRank(data.rank, data.total, data.grades);
         }
       })
       .catch(error => {
@@ -258,13 +276,10 @@ async function runGlobalRanking() {
     const agree = localStorage.getItem('allow')==="true";
     updateInformationText(agree);
     if (!agree) return removeGlobalRanking();
-    // D'abord essayer d'obtenir le classement via POST (qui renvoie rank/total pour éviter la race condition)
     try {
         await updateGlobalRank();
-        // Si updateGlobalRank a réussi et affiché le classement, on n'a pas besoin du GET
     } catch (error) {
         console.error('Error in updateGlobalRank:', error);
-        // En cas d'erreur dans le POST, fallback sur le GET
         try {
             await getGlobalRank();
         } catch (getRankError) {
