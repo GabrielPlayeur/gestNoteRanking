@@ -21,15 +21,22 @@ function getHMACSignature(payload) {
 const EXTENSION_VERSION = manifest.version;
 const EXTENSION_USER_AGENT = `GestNoteRanking/${EXTENSION_VERSION}`;
 
+// Helper function pour ajouter les headers d'authentification
+function addExtensionHeaders(request) {
+  return request
+    .set('User-Agent', EXTENSION_USER_AGENT)
+    .set('X-Extension-User-Agent', EXTENSION_USER_AGENT);
+}
+
 describe("Ranks API", () => {
   beforeAll(async () => {
     await mongoose.connect(process.env.MONGO_URI);
     // Préparation des données de test
     await ranksModel.deleteMany({ hash: { $in: ["test1", "test2", "test3", "test4", "test5"] } });
     await ranksModel.create([
-      { hash: "test1", year: 2024, maquette: 1, departement: 101, grade: 20 },
-      { hash: "test2", year: 2024, maquette: 1, departement: 101, grade: 10 },
-      { hash: "test3", year: 2024, maquette: 1, departement: 101, grade: 2 },
+      { hash: "test1", year: 2000, maquette: 1, departement: 101, grade: 20 },
+      { hash: "test2", year: 2000, maquette: 1, departement: 101, grade: 10 },
+      { hash: "test3", year: 2000 , maquette: 1, departement: 101, grade: 2 },
     ]);
   });
 
@@ -38,11 +45,8 @@ describe("Ranks API", () => {
     await mongoose.connection.close();
   });
 
-  describe("GET /api/ranks", () => {
-    it("should return all users", async () => {
-      const res = await request(app)
-        .get("/api/ranks")
-        .set('User-Agent', EXTENSION_USER_AGENT);
+  describe("GET /api/ranks", () => {    it("should return all users", async () => {
+      const res = await addExtensionHeaders(request(app).get("/api/ranks"));
       expect(res.statusCode).toBe(200);
       expect(Array.isArray(res.body)).toBe(true);
       expect(res.body.length).toBeGreaterThan(0);
@@ -81,7 +85,7 @@ describe("Ranks API", () => {
     it("should update a user (test3)", async () => {
       const payload = {
         hash: "test3",
-        year: 2024,
+        year: 2000,
         maquette: 1,
         departement: 101,
         grade: 3,
@@ -96,13 +100,15 @@ describe("Ranks API", () => {
       console.log('Response body:', res.body);
       console.log('Response status code:', res.statusCode);
       expect([200, 201]).toContain(res.statusCode); // Accepte 200 ou 201
-      expect(res.body).toHaveProperty('grade');
-      expect(res.body.grade.$numberDecimal).toBe("3");
+      expect(res.body).toHaveProperty('user');
+      expect(res.body).toHaveProperty('rank');
+      expect(res.body).toHaveProperty('total');
+      expect(res.body.user.grade.$numberDecimal).toBe("3");
     });
     it("should create a user (test4)", async () => {
       const payload = {
         hash: "test4",
-        year: 2024,
+        year: 2000,
         maquette: 1,
         departement: 101,
         grade: 4,
@@ -113,15 +119,16 @@ describe("Ranks API", () => {
         .post("/api/ranks")
         .set('User-Agent', EXTENSION_USER_AGENT)
         .set('X-GestNote-Signature', signature)
-        .send(payload);
-      expect(res.statusCode).toBe(201);
-      expect(res.body).toHaveProperty('grade');
-      expect(res.body.grade.$numberDecimal).toBe("4");
+        .send(payload);      expect(res.statusCode).toBe(201);
+      expect(res.body).toHaveProperty('user');
+      expect(res.body).toHaveProperty('rank');
+      expect(res.body).toHaveProperty('total');
+      expect(res.body.user.grade.$numberDecimal).toBe("4");
     });
     it("should fail with invalid HMAC signature", async () => {
       const payload = {
         hash: "test5",
-        year: 2024,
+        year: 2000,
         maquette: 1,
         departement: 101,
         grade: 5,
@@ -175,7 +182,7 @@ describe("Ranks API", () => {
     it("should return 500 if HMAC_SECRET is missing on POST", async () => {
       const orig = process.env.GESTNOTE_SECRET;
       delete process.env.GESTNOTE_SECRET;
-      const payload = { hash: "testX", year: 2024, maquette: 1, departement: 101, grade: 10 };
+      const payload = { hash: "testX", year: 2000, maquette: 1, departement: 101, grade: 10 };
       const res = await request(app)
         .post("/api/ranks")
         .set('User-Agent', EXTENSION_USER_AGENT)
@@ -187,7 +194,7 @@ describe("Ranks API", () => {
     });
 
     it("should return 401 if HMAC signature is invalid", async () => {
-      const payload = { hash: "testX", year: 2024, maquette: 1, departement: 101, grade: 10 };
+      const payload = { hash: "testX", year: 2000, maquette: 1, departement: 101, grade: 10 };
       const res = await request(app)
         .post("/api/ranks")
         .set('User-Agent', EXTENSION_USER_AGENT)
@@ -197,7 +204,7 @@ describe("Ranks API", () => {
       expect(res.body).toHaveProperty('error');
     });    // Les tests de validation fonctionnent maintenant directement, sans rate limiter
     it("should return 400 if validationResult fails (missing field)", async () => {
-      const payload = { year: 2024, maquette: 1, departement: 101, grade: 10 };
+      const payload = { year: 2000, maquette: 1, departement: 101, grade: 10 };
       const payloadStr = JSON.stringify(payload);
       const signature = getHMACSignature(payloadStr);
       const res = await request(app)
@@ -212,7 +219,7 @@ describe("Ranks API", () => {
 
     it("should return 400 if grade is < 0 or > 20", async () => {
       for (const badGrade of [-1, 21]) {
-        const payload = { hash: "testX", year: 2024, maquette: 1, departement: 101, grade: badGrade };
+        const payload = { hash: "testX", year: 2000, maquette: 1, departement: 101, grade: badGrade };
         const payloadStr = JSON.stringify(payload);
         const signature = getHMACSignature(payloadStr);
         const res = await request(app)

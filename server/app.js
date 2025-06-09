@@ -37,7 +37,7 @@ const allowedOrigins = [
 ];
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin) return callback(null, true); // autorise les requêtes sans origin (ex: Postman, tests locaux)
+    if (!origin) return callback(null, true);
     if (allowedOrigins.some(o => origin.startsWith(o))) {
       return callback(null, true);
     }
@@ -47,15 +47,15 @@ app.use(cors({
 
 function userAgentMiddleware(req, res, next) {
   const userAgent = req.get('User-Agent') || '';
-  if (!userAgent.includes(`GestNoteRanking/${EXTENSION_VERSION}`)) {
+  const extensionUserAgent = req.get('X-Extension-User-Agent') || '';
+  // Vérifie soit le User-Agent standard, soit le header personnalisé de l'extension
+  if (!userAgent.includes(EXTENSION_USER_AGENT) && !extensionUserAgent.includes(EXTENSION_USER_AGENT)) {
     return res.status(403).json({ error: 'User-Agent non autorisé' });
   }
   next();
 }
 
-// Middleware pour vérifier le User-Agent
 app.use('/api/ranks', userAgentMiddleware);
-
 app.use('/api', ranksRouter);
 app.use('/privacy-policy', privacyPolicyRouter);
 

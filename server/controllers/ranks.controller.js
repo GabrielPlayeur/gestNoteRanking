@@ -76,15 +76,26 @@ const postUpdate = async (req, res) => {
       Number(grade) < 0 || Number(grade) > 20
     ) {
       return res.status(400).json({ error: "Invalid data" });
-    }
-    const filter = {hash: hash, year: year, maquette: maquette, departement : departement};
+    }    const filter = {hash: hash, year: year, maquette: maquette, departement : departement};
     const doesUserExit = await ranksModel.exists(filter);
+    let savedData;
     if (doesUserExit) {
-      const savedData = await updateUser(grade, filter);
-      return res.status(200).json(savedData);
+      savedData = await updateUser(grade, filter);
+    } else {
+      savedData = await createUser(hash, year, maquette, departement, grade);
     }
-    const savedData = await createUser(hash, year, maquette, departement, grade);
-    res.status(201).json(savedData);
+    const rankFilter = {year: year, maquette: maquette, departement: departement};
+    const result = await ranksModel.find(rankFilter).sort({ grade: -1 });
+    const userIndex = result.findIndex(u => u.hash === hash);
+    const rankData = { 
+      rank: userIndex + 1, 
+      total: result.length,
+      user: savedData
+    };
+    if (doesUserExit) {
+      return res.status(200).json(rankData);
+    }
+    res.status(201).json(rankData);
   } catch (error) {
     console.error('POST /api/ranks error:', error);
     res.status(500).send({ msg: error.message });

@@ -1,4 +1,6 @@
 const URL_SERVER = "https://gestnote-ranking.onrender.com"
+// const URL_SERVER = "http://127.0.0.1:5000"
+const globalExtensionVersion = '1.0.7';
 
 function getSemesterId() {
     var maq = document.getElementById("maq");
@@ -121,11 +123,22 @@ async function getGlobalRank(){
     fetch(url, {
 	    method: 'get'
     })
-    .then(response => response.text())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.text();
+    })
     .then(str => JSON.parse(str))
     .then(data => {
-        displayGlobalRank(data.rank, data.total);
+        if (data.rank && data.total) {
+            displayGlobalRank(data.rank, data.total);
+        }
     })
+    .catch(error => {
+        console.error('Error in getGlobalRank:', error);
+        // En cas d'erreur, ne pas afficher de classement incorrect
+    });
 }
 
 function displayGlobalRank(rank, total) {
@@ -145,19 +158,13 @@ async function updateGlobalRank(){
     };
     const payload = JSON.stringify(data);
     const signature = await generateHMACSignature(payload);
-    // Récupère dynamiquement la version depuis le manifest
-    let extensionVersion = '1.0.0';
-    try {
-        const manifest = await fetch(chrome.runtime.getURL('manifest.json')).then(r => r.json());
-        extensionVersion = manifest.version;
-    } catch (e) {}
-    const userAgent = `GestNoteRanking/${extensionVersion}`;
+    const extensionUserAgent = `GestNoteRanking/${globalExtensionVersion}`;
     fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-GestNote-Signature': signature,
-        'User-Agent': userAgent
+        'X-Extension-User-Agent': extensionUserAgent
       },
       body: payload
     })
@@ -169,6 +176,10 @@ async function updateGlobalRank(){
       })
       .then(data => {
         // console.log('Response data:', data);
+        // Utiliser les données de classement directement de la réponse POST
+        if (data.rank && data.total) {
+          displayGlobalRank(data.rank, data.total);
+        }
       })
       .catch(error => {
         console.error('Error:', error);
@@ -247,8 +258,19 @@ async function runGlobalRanking() {
     const agree = localStorage.getItem('allow')==="true";
     updateInformationText(agree);
     if (!agree) return removeGlobalRanking();
-    await updateGlobalRank();
-    await getGlobalRank();
+    // D'abord essayer d'obtenir le classement via POST (qui renvoie rank/total pour éviter la race condition)
+    try {
+        await updateGlobalRank();
+        // Si updateGlobalRank a réussi et affiché le classement, on n'a pas besoin du GET
+    } catch (error) {
+        console.error('Error in updateGlobalRank:', error);
+        // En cas d'erreur dans le POST, fallback sur le GET
+        try {
+            await getGlobalRank();
+        } catch (getRankError) {
+            console.error('Error in getGlobalRank fallback:', getRankError);
+        }
+    }
 }
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
