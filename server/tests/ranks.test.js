@@ -53,29 +53,25 @@ describe("Ranks API", () => {
     });
   });
 
-  describe("GET /api/ranks/:hash", () => {
-    it("should return the user's rank if hash exists (test1)", async () => {
-      const res = await request(app)
-        .get("/api/ranks/test1")
-        .set('User-Agent', EXTENSION_USER_AGENT);
+  describe("GET /api/ranks/:hash", () => {    it("should return the user's rank if hash exists (test1)", async () => {
+      const res = await addExtensionHeaders(request(app).get("/api/ranks/test1"));
       expect(res.statusCode).toBe(200);
       expect(res.body).toHaveProperty('rank');
       expect(res.body).toHaveProperty('total');
+      expect(res.body).toHaveProperty('grades');
+      expect(Array.isArray(res.body.grades)).toBe(true);
       expect(res.body.rank).toBe(1);
     });
     it("should return the user's rank if hash exists (test2)", async () => {
-      const res = await request(app)
-        .get("/api/ranks/test2")
-        .set('User-Agent', EXTENSION_USER_AGENT);
+      const res = await addExtensionHeaders(request(app).get("/api/ranks/test2"));
       expect(res.statusCode).toBe(200);
       expect(res.body).toHaveProperty('rank');
       expect(res.body).toHaveProperty('total');
+      expect(res.body).toHaveProperty('grades');
+      expect(Array.isArray(res.body.grades)).toBe(true);
       expect(res.body.total).toBe(3);
-    });
-    it("should return 404 if hash does not exist", async () => {
-      const res = await request(app)
-        .get("/api/ranks/test_")
-        .set('User-Agent', EXTENSION_USER_AGENT);
+    });    it("should return 404 if hash does not exist", async () => {
+      const res = await addExtensionHeaders(request(app).get("/api/ranks/test_"));
       expect(res.statusCode).toBe(404);
       expect(res.body).toEqual(expect.anything());
     });
@@ -98,11 +94,12 @@ describe("Ranks API", () => {
         .set('X-GestNote-Signature', signature)
         .send(payload);
       console.log('Response body:', res.body);
-      console.log('Response status code:', res.statusCode);
-      expect([200, 201]).toContain(res.statusCode); // Accepte 200 ou 201
+      console.log('Response status code:', res.statusCode);      expect([200, 201]).toContain(res.statusCode); // Accepte 200 ou 201
       expect(res.body).toHaveProperty('user');
       expect(res.body).toHaveProperty('rank');
       expect(res.body).toHaveProperty('total');
+      expect(res.body).toHaveProperty('grades');
+      expect(Array.isArray(res.body.grades)).toBe(true);
       expect(res.body.user.grade.$numberDecimal).toBe("3");
     });
     it("should create a user (test4)", async () => {
@@ -123,6 +120,8 @@ describe("Ranks API", () => {
       expect(res.body).toHaveProperty('user');
       expect(res.body).toHaveProperty('rank');
       expect(res.body).toHaveProperty('total');
+      expect(res.body).toHaveProperty('grades');
+      expect(Array.isArray(res.body.grades)).toBe(true);
       expect(res.body.user.grade.$numberDecimal).toBe("4");
     });
     it("should fail with invalid HMAC signature", async () => {

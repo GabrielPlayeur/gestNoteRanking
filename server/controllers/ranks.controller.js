@@ -29,11 +29,15 @@ const getRank = async (req, res) => {
     const user = await ranksModel.findOne({hash: hash});
     if (user==null) {
       return res.status(404).json("The resource with the specified 'hash' was not found.");
-    }
-    const filter = {year: user.year, maquette: user.maquette, departement : user.departement};
+    }    const filter = {year: user.year, maquette: user.maquette, departement : user.departement};
     const result = await ranksModel.find(filter).sort({ grade: -1 });
     const userIndex = result.findIndex(u => u.hash === hash);
-    res.status(200).json({ "rank": userIndex+1, "total": result.length });
+    const grades = result.map(user => parseFloat(user.grade.toString()));
+    res.status(200).json({ 
+      "rank": userIndex+1, 
+      "total": result.length,
+      "grades": grades
+    });
   } catch (error) {
     res.status(500).json({ msg: error.message });
   }
@@ -83,13 +87,14 @@ const postUpdate = async (req, res) => {
       savedData = await updateUser(grade, filter);
     } else {
       savedData = await createUser(hash, year, maquette, departement, grade);
-    }
-    const rankFilter = {year: year, maquette: maquette, departement: departement};
+    }    const rankFilter = {year: year, maquette: maquette, departement: departement};
     const result = await ranksModel.find(rankFilter).sort({ grade: -1 });
     const userIndex = result.findIndex(u => u.hash === hash);
+    const grades = result.map(user => parseFloat(user.grade.toString()));
     const rankData = { 
       rank: userIndex + 1, 
       total: result.length,
+      grades: grades,
       user: savedData
     };
     if (doesUserExit) {
