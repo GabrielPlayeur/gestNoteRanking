@@ -1,6 +1,14 @@
 const mongoose = require('mongoose');
 const app = require("./app");
 
+// check si le dossier logs existe, sinon le créer
+const fs = require('fs');
+const path = require('path');
+const logsDir = path.join(__dirname, './logs');
+if (!fs.existsSync(logsDir)) {
+    fs.mkdirSync(logsDir, { recursive: true });
+}
+
 require('dotenv').config();
 
 mongoose

@@ -1,11 +1,12 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
-const ranksModel = require('./models/ranks.model');
+const ranksModel = require('../models/ranks.model.js');
 
 async function analyzeGrades() {
-    try {        console.log('Connexion à MongoDB...');
-        const mongoURL = process.env.MONGO_URI;
-        await mongoose.connect(mongoURL);
+    try {
+        console.log('Connexion à MongoDB...');
+        const mongoURI = process.env.MONGO_URI;
+        await mongoose.connect(mongoURI);
         console.log('✓ Connecté à MongoDB');
 
         // Analyse détaillée des grades
@@ -64,9 +65,12 @@ async function analyzeGrades() {
         ]);
 
         console.log('\nStatistiques par département :');
+        totalCount = 0;
         deptStats.forEach(dept => {
             console.log(`Dept ${dept._id}: ${dept.count} étudiants, Moyenne: ${dept.avgGrade.toFixed(2)}, Min: ${dept.minGrade}, Max: ${dept.maxGrade}`);
+            totalCount += dept.count;
         });
+        console.log(`Total d'étudiants analysés : ${totalCount}`);
 
     } catch (error) {
         console.error('Erreur lors de l\'analyse:', error);

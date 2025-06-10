@@ -1,6 +1,7 @@
 const ranksModel = require('../models/ranks.model')
 const { body, validationResult } = require('express-validator');
 const crypto = require('crypto');
+const { SecurityLogger } = require('../utils/securityLogger');
 
 /**
  * It's an asynchronous function that uses the rank model to find all users and then
@@ -39,6 +40,7 @@ const getRank = async (req, res) => {
       "grades": grades
     });
   } catch (error) {
+    SecurityLogger.logServerError(req, error, 'getRank function');
     res.status(500).json({ msg: error.message });
   }
 };
@@ -62,37 +64,53 @@ const postUpdate = async (req, res) => {
   try {
     const HMAC_SECRET = process.env.GESTNOTE_SECRET;
     if (!HMAC_SECRET) {
-      console.error('HMAC_SECRET is undefined!');
+      SecurityLogger.logServerError(req, new Error('HMAC_SECRET is undefined'), 'postUpdate - missing secret');
       return res.status(500).json({ error: 'Server HMAC secret misconfigured' });
     }
     const signature = req.get('X-GestNote-Signature');
+    if (!signature) {
+      SecurityLogger.logMissingHMAC(req);
+      return res.status(401).json({ error: 'Signature HMAC manquante' });
+    }
     const payload = JSON.stringify(req.body);
     const expectedSignature = crypto.createHmac('sha256', HMAC_SECRET).update(payload).digest('hex');
     if (signature !== expectedSignature) {
+      SecurityLogger.logInvalidHMACSignature(req, signature);
       return res.status(401).json({ error: 'Signature HMAC invalide' });
     }
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      SecurityLogger.logMalformedRequest(req, errors.array());
       return res.status(400).json({ errors: errors.array() });
     }
     const { hash, year, maquette, departement, grade } = req.body;
-    if ( isNaN(year) || isNaN(maquette) || isNaN(departement) || isNaN(grade) ||
-      Number(grade) < 0 || Number(grade) > 20
-    ) {
+    if (isNaN(year) || isNaN(maquette) || isNaN(departement) || isNaN(grade)) {
+      SecurityLogger.logMalformedRequest(req, ['Invalid numeric values']);
       return res.status(400).json({ error: "Invalid data" });
-    }    const filter = {hash: hash, year: year, maquette: maquette, departement : departement};
+    }
+    const gradeNum = Number(grade);
+    // Log pour note de 0 (comportement suspect)
+    if (gradeNum === 0) {
+      SecurityLogger.logZeroGradeSubmission(req, gradeNum, { hash, year, maquette, departement });
+    }
+    // Log pour notes suspectes (négatives ou supérieures à 20)
+    if (gradeNum < 0 || gradeNum > 20) {
+      SecurityLogger.logSuspiciousGrade(req, gradeNum, { hash, year, maquette, departement });
+      return res.status(400).json({ error: "Invalid data" });
+    }
+    // Log pour notes très élevées (potentiellement suspectes)
+    if (gradeNum > 19.5) {
+      SecurityLogger.logSuspiciousGrade(req, gradeNum, { hash, year, maquette, departement });
+    }
+    const filter = {hash: hash, year: year, maquette: maquette, departement : departement};
     const doesUserExit = await ranksModel.exists(filter);
-    let savedData;
-    if (doesUserExit) {
-      savedData = await updateUser(grade, filter);
-    } else {
-      savedData = await createUser(hash, year, maquette, departement, grade);
-    }    const rankFilter = {year: year, maquette: maquette, departement: departement};
+    let savedData = doesUserExit ? await updateUser(grade, filter) : await createUser(hash, year, maquette, departement, grade);
+    const rankFilter = {year: year, maquette: maquette, departement: departement};
     const result = await ranksModel.find(rankFilter).sort({ grade: -1 });
     const userIndex = result.findIndex(u => u.hash === hash);
     const grades = result.map(user => parseFloat(user.grade.toString()));
-    const rankData = { 
-      rank: userIndex + 1, 
+    const rankData = {
+      rank: userIndex + 1,
       total: result.length,
       grades: grades,
       user: savedData
@@ -102,7 +120,6 @@ const postUpdate = async (req, res) => {
     }
     res.status(201).json(rankData);
   } catch (error) {
-    console.error('POST /api/ranks error:', error);
     res.status(500).send({ msg: error.message });
   }
 }
@@ -145,6 +162,7 @@ const deleteUser = async (req, res) => {
     const user = await ranksModel.findOneAndDelete({hash: req.params.hash});
     res.status(200).json(user);
   } catch (error) {
+    SecurityLogger.logServerError(req, error, 'deleteUser function');
     res.status(500).send({ msg: error.message });
   }
 }
