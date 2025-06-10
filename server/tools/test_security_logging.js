@@ -42,7 +42,7 @@ async function testSecurityLogging() {
             departement: 101,
             grade: 15.5
         });
-        const signature = crypto.createHmac('sha256', process.env.GESTNOTE_SECRET || '658e02624f38c792ac9a97f2')
+        const signature = crypto.createHmac('sha256', process.env.GESTNOTE_SECRET)
             .update(payload)
             .digest('hex');
 
@@ -62,7 +62,7 @@ async function testSecurityLogging() {
             departement: 101,
             grade: 0 // Suspicious grade
         });
-        const zeroSignature = crypto.createHmac('sha256', process.env.GESTNOTE_SECRET || '658e02624f38c792ac9a97f2')
+        const zeroSignature = crypto.createHmac('sha256', process.env.GESTNOTE_SECRET)
             .update(zeroGradePayload)
             .digest('hex');
 
@@ -81,7 +81,7 @@ async function testSecurityLogging() {
             departement: 101,
             grade: 19.8 // Very high grade (suspicious)
         });
-        const highSignature = crypto.createHmac('sha256', process.env.GESTNOTE_SECRET || '658e02624f38c792ac9a97f2')
+        const highSignature = crypto.createHmac('sha256', process.env.GESTNOTE_SECRET)
             .update(highGradePayload)
             .digest('hex');
 
