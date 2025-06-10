@@ -3,16 +3,15 @@ const mongoose = require('mongoose');
 const ranksModel = require('../models/ranks.model.js');
 
 async function analyzeGrades() {
-    try {
-        console.log('Connexion à MongoDB...');
+    try {        console.log('Connecting to MongoDB...');
         const mongoURI = process.env.MONGO_URI;
         await mongoose.connect(mongoURI);
-        console.log('✓ Connecté à MongoDB');
+        console.log('✓ Connected to MongoDB');
 
-        // Analyse détaillée des grades
-        console.log('\n=== ANALYSE DES GRADES ===');
+        // Detailed grade analysis
+        console.log('\n=== GRADE ANALYSIS ===');
 
-        // Distribution des grades
+        // Grade distribution
         const gradeDistribution = await ranksModel.aggregate([
             {
                 $addFields: {
@@ -28,27 +27,23 @@ async function analyzeGrades() {
             {
                 $sort: { "_id": 1 }
             }
-        ]);
-
-        console.log('\nDistribution des grades :');
+        ]);        console.log('\nGrade distribution:');
         gradeDistribution.forEach(item => {
-            console.log(`Grade ${item._id} : ${item.count} enregistrements`);
+            console.log(`Grade ${item._id}: ${item.count} records`);
         });
 
-        // Enregistrements suspects (grade très bas)
+        // Suspicious records (very low grades)
         const suspiciousGrades = await ranksModel.find({
             $expr: { $lte: [{ $toDouble: "$grade" }, 1] }
         }).sort({ grade: 1 });
 
-        console.log(`\nEnregistrements avec grade ≤ 1 : ${suspiciousGrades.length}`);
+        console.log(`\nRecords with grade ≤ 1: ${suspiciousGrades.length}`);
         if (suspiciousGrades.length > 0) {
-            console.log('Détails des 10 premiers :');
+            console.log('Details of first 10:');
             suspiciousGrades.slice(0, 10).forEach((record, index) => {
                 console.log(`${index + 1}. Grade: ${record.grade}, Year: ${record.year}, Dept: ${record.departement}, Updated: ${record.updatedAt}`);
             });
-        }
-
-        // Enregistrements par département
+        }        // Records by department
         const deptStats = await ranksModel.aggregate([
             {
                 $group: {
@@ -64,19 +59,17 @@ async function analyzeGrades() {
             }
         ]);
 
-        console.log('\nStatistiques par département :');
+        console.log('\nStatistics by department:');
         totalCount = 0;
         deptStats.forEach(dept => {
-            console.log(`Dept ${dept._id}: ${dept.count} étudiants, Moyenne: ${dept.avgGrade.toFixed(2)}, Min: ${dept.minGrade}, Max: ${dept.maxGrade}`);
+            console.log(`Dept ${dept._id}: ${dept.count} students, Average: ${dept.avgGrade.toFixed(2)}, Min: ${dept.minGrade}, Max: ${dept.maxGrade}`);
             totalCount += dept.count;
         });
-        console.log(`Total d'étudiants analysés : ${totalCount}`);
-
-    } catch (error) {
-        console.error('Erreur lors de l\'analyse:', error);
+        console.log(`Total students analyzed: ${totalCount}`);    } catch (error) {
+        console.error('Error during analysis:', error);
     } finally {
         await mongoose.disconnect();
-        console.log('\n✓ Déconnecté de MongoDB');
+        console.log('\n✓ Disconnected from MongoDB');
     }
 }
 

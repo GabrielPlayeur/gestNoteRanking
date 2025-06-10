@@ -93,12 +93,12 @@ const postUpdate = async (req, res) => {
     if (gradeNum === 0) {
       SecurityLogger.logZeroGradeSubmission(req, gradeNum, { hash, year, maquette, departement });
     }
-    // Log pour notes suspectes (négatives ou supérieures à 20)
+    // Log for suspicious grades (negative or greater than 20)
     if (gradeNum < 0 || gradeNum > 20) {
       SecurityLogger.logSuspiciousGrade(req, gradeNum, { hash, year, maquette, departement });
       return res.status(400).json({ error: "Invalid data" });
     }
-    // Log pour notes très élevées (potentiellement suspectes)
+    // Log for very high grades (potentially suspicious)
     if (gradeNum > 19.5) {
       SecurityLogger.logSuspiciousGrade(req, gradeNum, { hash, year, maquette, departement });
     }

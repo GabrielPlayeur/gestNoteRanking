@@ -32,11 +32,11 @@ app.get("/", function (req, res) {
     res.send("Hello World!");
 });
 
-// CORS restrictif : n'autorise que les requêtes venant de l'extension ou du site officiel
+// Restrictive CORS: only allow requests from extension or official site
 const allowedOrigins = [
   'https://scolarite.polytech.univ-nantes.fr',
-  'chrome-extension://', // Pour Chrome extension
-  'moz-extension://',    // Pour Firefox extension
+  'chrome-extension://', // For Chrome extension
+  'moz-extension://',    // For Firefox extension
 ];
 app.use(cors({
   origin: function (origin, callback) {
@@ -55,7 +55,7 @@ function userAgentMiddleware(req, res, next) {
   const extensionUserAgent = req.get('X-Extension-User-Agent') || '';
   if (!userAgent.includes(EXTENSION_USER_AGENT) && !extensionUserAgent.includes(EXTENSION_USER_AGENT)) {
     SecurityLogger.logInvalidUserAgent(req);
-    return res.status(403).json({ error: 'User-Agent non autorisé' });
+    return res.status(403).json({ error: 'Unauthorized User-Agent' });
   }
   next();
 }

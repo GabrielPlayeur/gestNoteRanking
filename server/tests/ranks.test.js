@@ -5,13 +5,13 @@ const crypto = require("crypto");
 const ranksModel = require("../models/ranks.model");
 const manifest = require("../../extension/manifest.json");
 
-// Définir NODE_ENV pour désactiver le rate limiter en tests
+// Define NODE_ENV to disable rate limiter in tests
 process.env.NODE_ENV = 'test';
 
 require("dotenv").config({ path: __dirname + '/../.env' });
 console.log('GESTNOTE_SECRET in test:', process.env.GESTNOTE_SECRET);
 
-jest.setTimeout(20000); // Augmente le timeout global à 20s pour les tests lents (connexion MongoDB)
+jest.setTimeout(20000); // Increase global timeout to 20s for slow tests (MongoDB connection)
 
 function getHMACSignature(payload) {
   const secret = process.env.GESTNOTE_SECRET;
@@ -21,7 +21,7 @@ function getHMACSignature(payload) {
 const EXTENSION_VERSION = manifest.version;
 const EXTENSION_USER_AGENT = `GestNoteRanking/${EXTENSION_VERSION}`;
 
-// Helper function pour ajouter les headers d'authentification
+// Helper function to add authentication headers
 function addExtensionHeaders(request) {
   return request
     .set('User-Agent', EXTENSION_USER_AGENT)
@@ -31,7 +31,7 @@ function addExtensionHeaders(request) {
 describe("Ranks API", () => {
   beforeAll(async () => {
     await mongoose.connect(process.env.MONGO_URI);
-    // Préparation des données de test
+    // Test data preparation
     await ranksModel.deleteMany({ hash: { $in: ["test1", "test2", "test3", "test4", "test5"] } });
     await ranksModel.create([
       { hash: "test1", year: 2000, maquette: 1, departement: 101, grade: 20 },
@@ -94,7 +94,7 @@ describe("Ranks API", () => {
         .set('X-GestNote-Signature', signature)
         .send(payload);
       console.log('Response body:', res.body);
-      console.log('Response status code:', res.statusCode);      expect([200, 201]).toContain(res.statusCode); // Accepte 200 ou 201
+      console.log('Response status code:', res.statusCode);      expect([200, 201]).toContain(res.statusCode); // Accept 200 or 201
       expect(res.body).toHaveProperty('user');
       expect(res.body).toHaveProperty('rank');
       expect(res.body).toHaveProperty('total');
@@ -150,7 +150,7 @@ describe("Ranks API", () => {
         .delete("/api/ranks/test4")
         .set('User-Agent', EXTENSION_USER_AGENT);
       expect(res.statusCode).toBe(200);
-      // Accepte null ou objet (si déjà supprimé)
+      // Accept null or object (if already deleted)
       expect([null, Object.prototype]).toContain(res.body === null ? null : Object.prototype);
     });
   });
@@ -201,7 +201,7 @@ describe("Ranks API", () => {
         .send(payload);
       expect(res.statusCode).toBe(401);
       expect(res.body).toHaveProperty('error');
-    });    // Les tests de validation fonctionnent maintenant directement, sans rate limiter
+    });    // Validation tests now work directly, without rate limiter
     it("should return 400 if validationResult fails (missing field)", async () => {
       const payload = { year: 2000, maquette: 1, departement: 101, grade: 10 };
       const payloadStr = JSON.stringify(payload);
@@ -258,7 +258,7 @@ describe("Ranks API", () => {
         .get("/api/ranks")
         .set('Origin', 'https://evil.com')
         .set('User-Agent', EXTENSION_USER_AGENT);
-      // CORS middleware renvoie une erreur 500 si origine non autorisée
+      // CORS middleware returns 500 error if origin not authorized
       expect([500, 403]).toContain(res.statusCode);
     });
   });

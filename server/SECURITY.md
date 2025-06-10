@@ -1,93 +1,93 @@
-# Système de Sécurité et de Logging - GestNote Ranking
+# Security and Logging System - GestNote Ranking
 
-## Vue d'ensemble
+## Overview
 
-Le système de sécurité de GestNote Ranking surveille et enregistre les comportements suspects pour protéger l'application contre les abus et les attaques. Il comprend :
+The GestNote Ranking security system monitors and records suspicious behaviors to protect the application against abuse and attacks. It includes:
 
-- **Logging sélectif** : Enregistre uniquement les événements suspects
-- **Blocage automatique d'IP** : Bloque les adresses IP problématiques
-- **Analyse des logs** : Identifie les patterns suspects
-- **API d'administration** : Gestion centralisée de la sécurité
+- **Selective logging**: Records only suspicious events
+- **Automatic IP blocking**: Blocks problematic IP addresses
+- **Log analysis**: Identifies suspicious patterns
+- **Administration API**: Centralized security management
 
-## Types d'événements surveillés
+## Types of monitored events
 
-### 🚨 Événements suspects loggés :
+### 🚨 Suspicious events logged:
 
-1. **Soumission de note 0** - Potentiel spam ou test malveillant
-2. **Dépassement de limite de requêtes** - Attaque par déni de service
-3. **User-Agent invalide** - Tentative d'accès non autorisé
-4. **Signature HMAC invalide** - Tentative de falsification de données
-5. **Requêtes malformées** - Données corrompues ou malveillantes
-6. **Notes suspectes** - Valeurs aberrantes (négatives, >20, très élevées)
-7. **Erreurs serveur** - Problèmes techniques critiques
-8. **Violations CORS** - Tentatives d'accès depuis des domaines non autorisés
+1. **Zero grade submission** - Potential spam or malicious testing
+2. **Rate limit exceeded** - Denial of service attack
+3. **Invalid User-Agent** - Unauthorized access attempt
+4. **Invalid HMAC signature** - Data falsification attempt
+5. **Malformed requests** - Corrupted or malicious data
+6. **Suspicious grades** - Aberrant values (negative, >20, very high)
+7. **Server errors** - Critical technical issues
+8. **CORS violations** - Access attempts from unauthorized domains
 
-### ⚠️ Comportements NON loggés (fonctionnement normal) :
+### ⚠️ Behaviors NOT logged (normal operation):
 
-- Connexions réussies
-- Mises à jour de notes normales
-- Requêtes GET légitimes
-- Opérations de routine
+- Successful connections
+- Normal grade updates
+- Legitimate GET requests
+- Routine operations
 
-## Structure des fichiers
+## File structure
 
 ```
 server/
-├── logs/                          # Fichiers de logs
-│   ├── suspicious.log            # Événements suspects
-│   ├── critical.log              # Événements critiques
-│   └── ip_blocklist.json         # Liste des IP bloquées
+├── logs/                          # Log files
+│   ├── suspicious.log            # Suspicious events
+│   ├── critical.log              # Critical events
+│   └── ip_blocklist.json         # Blocked IP list
 ├── utils/
-│   ├── securityLogger.js         # Module de logging
-│   ├── SecurityLogAnalyzer.js    # Analyseur de logs
-│   └── ipBlocker.js              # Gestionnaire de blocage IP
+│   ├── securityLogger.js         # Logging module
+│   ├── SecurityLogAnalyzer.js    # Log analyzer
+│   └── ipBlocker.js              # IP blocking manager
 ├── routes/
-│   └── admin.route.js            # API d'administration
+│   └── admin.route.js            # Administration API
 └── tools/
-    ├── analyze_security_logs.js  # Script d'analyse
-    └── test_security_logging.js  # Tests de logging
+    ├── analyze_security_logs.js  # Analysis script
+    └── test_security_logging.js  # Logging Tests
 ```
 
-## Utilisation
+## Usage
 
-### 1. Analyser les logs de sécurité
+### 1. Analyze security logs
 
 ```bash
 cd server
 node tools/analyze_security_logs.js
 ```
 
-**Sortie exemple :**
+**Example output:**
 ```
-=== ANALYSE DES LOGS DE SÉCURITÉ ===
+=== ANALYSE DES LOGS DE security ===
 
 Résumé de l'analyse:
-- Événements suspects totaux: 45
+- events suspects totaux: 45
 - IP uniques détectées: 8
-- Événements critiques: 3
-- IP suspectes (≥5 événements): 2
+- events criticals: 3
+- IP suspectes (≥5 events): 2
 - IP à haut risque: 1
 
-🚨 IP À HAUT RISQUE:
+🚨 HIGH RISK IPs:
 1. IP: 192.168.1.100
-   - Événements: 15
-   - Sévérité: critical
-   - Types d'événements: zero_grade_submission(8), rate_limit_exceeded(4), invalid_hmac_signature(3)
+   - Events: 15
+   - Severity: critical
+   - Event types: zero_grade_submission(8), rate_limit_exceeded(4), invalid_hmac_signature(3)
 ```
 
-### 2. Tester le système de logging
+### 2. Test the logging system
 
 ```bash
 cd server
 node tools/test_security_logging.js
 ```
 
-### 3. API d'administration
+### 3. Administration API
 
-#### Authentification
-Toutes les routes admin nécessitent le header `X-Admin-Token` avec la valeur définie dans `ADMIN_TOKEN`.
+#### Authentication
+All admin routes require the `X-Admin-token` header with the value defined in `ADMIN_token`.
 
-#### Endpoints disponibles :
+#### Available endpoints:
 
 **GET /admin/security/stats**
 ```json
@@ -118,7 +118,7 @@ Toutes les routes admin nécessitent le header `X-Admin-Token` avec la valeur d�
 ```
 
 **DELETE /admin/security/block/192.168.1.100**
-- Débloquer une IP
+- DéBlock an IP
 
 **GET /admin/security/blocked**
 - Liste des IP actuellement bloquées
@@ -126,40 +126,40 @@ Toutes les routes admin nécessitent le header `X-Admin-Token` avec la valeur d�
 **POST /admin/security/analyze**
 ```json
 {
-  "autoBlock": true  // Bloquer automatiquement les IP à haut risque
+  "autoBlock": true  // Block automatiquement les IP à haut risque
 }
 ```
 
 ### 4. Configuration
 
-#### Variables d'environnement (.env)
+#### Environment variables (.env)
 ```
-ADMIN_TOKEN=YOUR_TOKEN
+ADMIN_token=YOUR_token
 ```
 
 #### Seuils configurables
 
 Dans `SecurityLogAnalyzer.js` :
-- `suspiciousThreshold: 5` - Nombre d'événements pour considérer une IP comme suspecte
+- `suspiciousThreshold: 5` - Nombre d'events pour considérer une IP comme suspecte
 - `updateInterval: 5 * 60 * 1000` - Fréquence de mise à jour des listes de blocage (5 min)
 
-## Exemples d'utilisation
+## Usage examples
 
-### Surveiller les attaques en temps réel
+### Monitor les attaques en temps réel
 
 ```bash
-# Surveiller les logs en continu
+# Monitor les logs en continu
 tail -f server/logs/suspicious.log | grep "rate_limit_exceeded"
 
-# Analyser les logs toutes les heures
+# Analyze les logs toutes les heures
 */60 * * * * cd /path/to/server && node tools/analyze_security_logs.js
 ```
 
-### Bloquer manuellement une IP
+### Block manuellement une IP
 
 ```bash
 curl -X POST http://localhost:5000/admin/security/block \
-  -H "X-Admin-Token: YOUR_TOKEN" \
+  -H "X-Admin-token: YOUR_token" \
   -H "Content-Type: application/json" \
   -d '{"ip": "192.168.1.100", "reason": "Attaque détectée"}'
 ```
@@ -167,30 +167,30 @@ curl -X POST http://localhost:5000/admin/security/block \
 ### Obtenir des statistiques
 
 ```bash
-curl -H "X-Admin-Token: YOUR_TOKEN" \
+curl -H "X-Admin-token: YOUR_token" \
   http://localhost:5000/admin/security/stats
 ```
 
 ## Fonctionnalités automatiques
 
 ### Blocage automatique
-- Les IP avec plus de 10 événements suspects sont automatiquement ajoutées à la liste de surveillance
-- Les IP avec des événements critiques répétés peuvent être bloquées automatiquement
+- Les IP avec plus de 10 events suspects sont automatiquement ajoutées à la liste de Monitoring
+- Les IP avec des events criticals répétés peuvent être bloquées automatiquement
 
 ### Rotation des logs
-- Fichiers de logs limités à 5MB chacun
-- Conservation de 5 fichiers de backup
+- files de logs limités à 5MB chacun
+- Conservation de 5 files de backup
 - Nettoyage automatique des anciens logs
 
-### Alertes recommandées
-- IP à haut risque : blocage immédiat recommandé
-- IP suspectes : surveillance renforcée
-- Événements critiques : investigation manuelle requise
+### Alertes recommendedes
+- IP à haut risque : blocage immédiat recommended
+- IP suspectes : Monitoring renforcée
+- events criticals : investigation manuelle requirede
 
 ## Intégration avec des systèmes externes
 
 ### Firewall/Proxy
-Le fichier `ip_blocklist.json` peut être utilisé par :
+Le file `ip_blocklist.json` peut être utilisé par :
 - Nginx
 - Apache
 - Cloudflare
@@ -203,9 +203,9 @@ Les logs sont compatibles avec :
 - Grafana + Loki
 - Systèmes SIEM
 
-## Sécurité et conformité
+## security et conformité
 
 - Les logs contiennent uniquement les informations nécessaires (pas de données personnelles)
-- Les IP sont anonymisables si requis par RGPD
+- Les IP sont anonymisables si required par RGPD
 - Audit trail complet des actions administratives
-- Chiffrement recommandé pour les fichiers de logs en production
+- Chiffrement recommended pour les files de logs en production

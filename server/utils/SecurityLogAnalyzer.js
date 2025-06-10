@@ -3,16 +3,15 @@ const path = require('path');
 const readline = require('readline');
 
 /**
- * Analyseur de logs de sécurité pour identifier les IP suspectes
+ * Security log analyzer to identify suspicious IPs
  */
 class SecurityLogAnalyzer {
   constructor() {
     this.suspiciousLogPath = path.join(__dirname, '../logs/suspicious.log');
     this.criticalLogPath = path.join(__dirname, '../logs/critical.log');
   }
-
   /**
-   * Analyse les logs et génère un rapport des IP suspectes
+   * Analyzes logs and generates a report of suspicious IPs
    */
   async analyzeSecurityLogs() {
     const report = {
@@ -23,35 +22,34 @@ class SecurityLogAnalyzer {
         totalEvents: 0,
         uniqueIPs: 0,
         criticalCount: 0,
-        suspiciousThreshold: 5 // Nombre d'événements suspects pour considérer une IP comme problématique
+        suspiciousThreshold: 5 // Number of suspicious events to consider an IP as problematic
       }
     };
 
     try {
-      // Analyser les logs suspects
+      // Analyze suspicious logs
       if (fs.existsSync(this.suspiciousLogPath)) {
         await this.processLogFile(this.suspiciousLogPath, report, 'suspicious');
       }
 
-      // Analyser les logs critiques
+      // Analyze critical logs
       if (fs.existsSync(this.criticalLogPath)) {
         await this.processLogFile(this.criticalLogPath, report, 'critical');
       }
 
-      // Calculer les statistiques finales
+      // Calculate final statistics
       report.summary.uniqueIPs = report.suspiciousIPs.size;
       report.summary.totalEvents = Array.from(report.suspiciousIPs.values())
         .reduce((total, ip) => total + ip.eventCount, 0);
 
       return this.generateReport(report);
     } catch (error) {
-      console.error('Erreur lors de l\'analyse des logs:', error);
+      console.error('Error during log analysis:', error);
       throw error;
     }
   }
-
   /**
-   * Traite un fichier de log ligne par ligne
+   * Processes a log file line by line
    */
   async processLogFile(filePath, report, severity) {
     const fileStream = fs.createReadStream(filePath);
@@ -66,21 +64,20 @@ class SecurityLogAnalyzer {
           const logEntry = JSON.parse(line);
           this.processLogEntry(logEntry, report, severity);
         } catch (parseError) {
-          console.warn('Ligne de log invalide:', line);
+          console.warn('Invalid log line:', line);
         }
       }
     }
   }
-
   /**
-   * Traite une entrée de log individuelle
+   * Processes an individual log entry
    */
   processLogEntry(logEntry, report, severity) {
     const ip = logEntry.ip || 'unknown';
     const eventType = logEntry.type || 'unknown';
     const timestamp = logEntry.timestamp || new Date().toISOString();
 
-    // Initialiser ou mettre à jour les données de l'IP
+    // Initialize or update IP data
     if (!report.suspiciousIPs.has(ip)) {
       report.suspiciousIPs.set(ip, {
         ip: ip,
@@ -97,18 +94,18 @@ class SecurityLogAnalyzer {
     ipData.eventCount++;
     ipData.lastSeen = timestamp;
 
-    // Compter les types d'événements
+    // Count event types
     if (!ipData.eventTypes.has(eventType)) {
       ipData.eventTypes.set(eventType, 0);
     }
     ipData.eventTypes.set(eventType, ipData.eventTypes.get(eventType) + 1);
 
-    // Collecter les User-Agents
+    // Collect User-Agents
     if (logEntry.userAgent && logEntry.userAgent !== 'unknown') {
       ipData.userAgents.add(logEntry.userAgent);
     }
 
-    // Mettre à jour la sévérité
+    // Update severity
     if (severity === 'critical' || logEntry.severity === 'critical') {
       ipData.severity = 'critical';
       report.criticalEvents.push({
@@ -124,9 +121,8 @@ class SecurityLogAnalyzer {
       ipData.severity = 'medium';
     }
   }
-
   /**
-   * Génère le rapport final
+   * Generates the final report
    */
   generateReport(report) {
     const suspiciousIPs = Array.from(report.suspiciousIPs.values())
@@ -154,13 +150,12 @@ class SecurityLogAnalyzer {
         eventTypes: Object.fromEntries(ip.eventTypes),
         userAgents: Array.from(ip.userAgents)
       })),
-      criticalEvents: report.criticalEvents.slice(-20), // Derniers 20 événements critiques
+      criticalEvents: report.criticalEvents.slice(-20), // Last 20 critical events
       recommendations: this.generateRecommendations(suspiciousIPs, highRiskIPs)
     };
   }
-
   /**
-   * Génère des recommandations basées sur l'analyse
+   * Generates recommendations based on analysis
    */
   generateRecommendations(suspiciousIPs, highRiskIPs) {
     const recommendations = [];
@@ -169,7 +164,7 @@ class SecurityLogAnalyzer {
       recommendations.push({
         priority: 'high',
         action: 'block_ips',
-        description: `Bloquer immédiatement les ${highRiskIPs.length} IP(s) à haut risque`,
+        description: `Immediately block the ${highRiskIPs.length} high-risk IP(s)`,
         ips: highRiskIPs.slice(0, 10).map(ip => ip.ip)
       });
     }
@@ -178,7 +173,7 @@ class SecurityLogAnalyzer {
       recommendations.push({
         priority: 'medium',
         action: 'monitor_ips',
-        description: `Surveiller étroitement ${suspiciousIPs.length} IP(s) suspectes`,
+        description: `Closely monitor ${suspiciousIPs.length} suspicious IP(s)`,
         ips: suspiciousIPs.slice(0, 20).map(ip => ip.ip)
       });
     }
@@ -191,16 +186,15 @@ class SecurityLogAnalyzer {
       recommendations.push({
         priority: 'high',
         action: 'investigate_zero_grades',
-        description: 'Enquêter sur les attaques de soumission de notes zéro',
+        description: 'Investigate zero grade submission attacks',
         ips: zeroGradeAttacks.map(ip => ip.ip)
       });
     }
 
     return recommendations;
   }
-
   /**
-   * Génère une liste d'IP à bloquer pour un firewall
+   * Generates a list of IPs to block for a firewall
    */
   generateBlockList(report) {
     const highRiskIPs = report.highRiskIPs || [];

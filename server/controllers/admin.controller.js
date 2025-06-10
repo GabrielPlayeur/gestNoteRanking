@@ -3,20 +3,20 @@ const SecurityLogAnalyzer = require('../utils/SecurityLogAnalyzer');
 const { SecurityLogger } = require('../utils/securityLogger');
 
 /**
- * Middleware d'authentification pour les routes d'administration
+ * Authentication middleware for admin routes
  */
 const adminAuth = (req, res, next) => {
   const token = req.headers['x-admin-token'];
   const expectedToken = process.env.ADMIN_TOKEN || '';
   if (!token || token !== expectedToken) {
-    SecurityLogger.logInvalidUserAgent(req); // Réutiliser ce type de log pour les tentatives d'accès admin
-    return res.status(401).json({ error: 'Token d\'administration requis' });
+    SecurityLogger.logInvalidUserAgent(req);
+    return res.status(401).json({ error: 'Administration token required' });
   }
   next();
 };
 
 /**
- * GET /admin/security/stats - Statistiques de sécurité
+ * GET /admin/security/stats - Security statistics
  */
 const getSecurityStats = async (req, res) => {
   try {
@@ -33,16 +33,15 @@ const getSecurityStats = async (req, res) => {
         highRiskIPs: report.summary.highRiskIPCount
       },
       blockedIPs: ipStats,
-      recommendations: report.recommendations
-    });
+      recommendations: report.recommendations    });
   } catch (error) {
     SecurityLogger.logServerError(req, error, 'admin security stats');
-    res.status(500).json({ error: 'Erreur lors de la récupération des statistiques' });
+    res.status(500).json({ error: 'Error retrieving statistics' });
   }
 };
 
 /**
- * GET /admin/security/report - Rapport de sécurité complet
+ * GET /admin/security/report - Complete security report
  */
 const getSecurityReport = async (req, res) => {
   try {
@@ -51,33 +50,32 @@ const getSecurityReport = async (req, res) => {
     res.json(report);
   } catch (error) {
     SecurityLogger.logServerError(req, error, 'admin security report');
-    res.status(500).json({ error: 'Erreur lors de la génération du rapport' });
+    res.status(500).json({ error: 'Error generating report' });
   }
 };
 
 /**
- * POST /admin/security/block - Bloquer une IP
+ * POST /admin/security/block - Block an IP
  */
 const blockIP = (req, res) => {
   try {
     const { ip, reason } = req.body;
     if (!ip) {
-      return res.status(400).json({ error: 'IP requise' });
+      return res.status(400).json({ error: 'IP required' });
     }
-    ipBlocker.blockIP(ip, reason || 'Manual admin block');
-    res.json({
+    ipBlocker.blockIP(ip, reason || 'Manual admin block');    res.json({
       success: true,
-      message: `IP ${ip} bloquée`,
+      message: `IP ${ip} blocked`,
       blockedCount: ipBlocker.getStats().blockedCount
     });
   } catch (error) {
     SecurityLogger.logServerError(req, error, 'admin block IP');
-    res.status(500).json({ error: 'Erreur lors du blocage de l\'IP' });
+    res.status(500).json({ error: 'Error blocking IP' });
   }
 };
 
 /**
- * DELETE /admin/security/block/:ip - Débloquer une IP
+ * DELETE /admin/security/block/:ip - Unblock an IP
  */
 const unblockIP = (req, res) => {
   try {
@@ -85,17 +83,17 @@ const unblockIP = (req, res) => {
     ipBlocker.unblockIP(ip);
     res.json({
       success: true,
-      message: `IP ${ip} débloquée`,
+      message: `IP ${ip} unblocked`,
       blockedCount: ipBlocker.getStats().blockedCount
     });
   } catch (error) {
     SecurityLogger.logServerError(req, error, 'admin unblock IP');
-    res.status(500).json({ error: 'Erreur lors du déblocage de l\'IP' });
+    res.status(500).json({ error: 'Error unblocking IP' });
   }
 };
 
 /**
- * GET /admin/security/blocked - Liste des IP bloquées
+ * GET /admin/security/blocked - List of blocked IPs
  */
 const getBlockedIPs = (req, res) => {
   try {
@@ -103,19 +101,19 @@ const getBlockedIPs = (req, res) => {
     res.json(stats);
   } catch (error) {
     SecurityLogger.logServerError(req, error, 'admin get blocked IPs');
-    res.status(500).json({ error: 'Erreur lors de la récupération des IP bloquées' });
+    res.status(500).json({ error: 'Error retrieving blocked IPs' });
   }
 };
 
 /**
- * POST /admin/security/analyze - Forcer une nouvelle analyse des logs
+ * POST /admin/security/analyze - Force new log analysis
  */
 const analyzeSecurityLogs = async (req, res) => {
   try {
     const analyzer = new SecurityLogAnalyzer();
     const report = await analyzer.analyzeSecurityLogs();
     const blockList = analyzer.generateBlockList(report);
-    // Ajouter automatiquement les IP à haut risque à la liste de blocage
+    // Automatically add high-risk IPs to block list
     let newlyBlocked = 0;
     if (req.body.autoBlock && blockList.ips.length > 0) {
       blockList.ips.forEach(ip => {
@@ -136,10 +134,9 @@ const analyzeSecurityLogs = async (req, res) => {
         recommended: blockList.ips.length,
         newlyBlocked: newlyBlocked
       }
-    });
-  } catch (error) {
+    });  } catch (error) {
     SecurityLogger.logServerError(req, error, 'admin security analyze');
-    res.status(500).json({ error: 'Erreur lors de l\'analyse de sécurité' });
+    res.status(500).json({ error: 'Error during security analysis' });
   }
 };
 

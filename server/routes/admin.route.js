@@ -10,22 +10,22 @@ const {
   analyzeSecurityLogs
 } = require('../controllers/admin.controller');
 
-// GET /admin/security/stats - Statistiques de sécurité
+// GET /admin/security/stats - Security statistics
 router.get('/security/stats', adminAuth, getSecurityStats);
 
-// GET /admin/security/report - Rapport de sécurité complet
+// GET /admin/security/report - Complete security report
 router.get('/security/report', adminAuth, getSecurityReport);
 
-// POST /admin/security/block - Bloquer une IP
+// POST /admin/security/block - Block an IP
 router.post('/security/block', adminAuth, blockIP);
 
-// DELETE /admin/security/block/:ip - Débloquer une IP
+// DELETE /admin/security/block/:ip - Unblock an IP
 router.delete('/security/block/:ip', adminAuth, unblockIP);
 
-// GET /admin/security/blocked - Liste des IP bloquées
+// GET /admin/security/blocked - List of blocked IPs
 router.get('/security/blocked', adminAuth, getBlockedIPs);
 
-// POST /admin/security/analyze - Forcer une nouvelle analyse des logs
+// POST /admin/security/analyze - Force new log analysis
 router.post('/security/analyze', adminAuth, analyzeSecurityLogs);
 
 module.exports = router;

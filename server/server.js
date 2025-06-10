@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const app = require("./app");
 
-// check si le dossier logs existe, sinon le créer
+// Check if logs folder exists, create it if not
 const fs = require('fs');
 const path = require('path');
 const logsDir = path.join(__dirname, './logs');

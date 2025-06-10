@@ -10,11 +10,11 @@ const {
 const rateLimit = require('express-rate-limit');
 const { SecurityLogger } = require('../utils/securityLogger');
 
-// Rate limiter : limite à 5 requêtes POST par minute par IP sur /api/ranks
+// Rate limiter: limit to 5 POST requests per minute per IP on /api/ranks
 const ranksLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: process.env.NODE_ENV === 'test' ? 1000 : 5, // Plus permissif en test
-  message: { error: 'Trop de requêtes, réessayez plus tard.' },
+  max: process.env.NODE_ENV === 'test' ? 1000 : 5, // More permissive in test
+  message: { error: 'Too many requests, try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res, next, options) => {
@@ -23,7 +23,7 @@ const ranksLimiter = rateLimit({
   }
 });
 
-// Middleware conditionnel pour le rate limiter (désactivé en test)
+// Conditional middleware for rate limiter (disabled in test)
 const conditionalRateLimiter = (req, res, next) => {
   if (process.env.NODE_ENV === 'test') {
     return next();
