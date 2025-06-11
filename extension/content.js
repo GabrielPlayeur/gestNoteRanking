@@ -1,5 +1,4 @@
-// const URL_SERVER = "https://gestnote-ranking.onrender.com"
-const URL_SERVER = "http://localhost:5000" // Uncomment for local testing
+const URL_SERVER = "https://gestnote-ranking.onrender.com"
 const globalExtensionVersion = '1.0.7';
 
 function getSemesterId() {
