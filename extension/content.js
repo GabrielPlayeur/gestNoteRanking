@@ -1,4 +1,5 @@
-const URL_SERVER = "https://gestnote-ranking.onrender.com"
+// const URL_SERVER = "https://gestnote-ranking.onrender.com"
+const URL_SERVER = "http://localhost:5000" // Uncomment for local testing
 const globalExtensionVersion = '1.0.7';
 
 function getSemesterId() {
@@ -106,7 +107,14 @@ function addDivListener(item) {
     item.addEventListener('mouseout', function() {
         pourcent.style.display = 'none';
         rank.style.display = 'inline';
-        hideHistogram();
+        setTimeout(() => {
+            const mouseOverGraph = window.graphContainer && window.graphContainer.matches(':hover');
+            const mouseOverGlobalBridge = window.globalBridge && window.globalBridge.matches(':hover');
+            const mouseOverText = item.matches(':hover');
+            if (!mouseOverGraph && !mouseOverGlobalBridge && !mouseOverText) {
+                hideHistogram();
+            }
+        }, 100);
     });
 }
 
