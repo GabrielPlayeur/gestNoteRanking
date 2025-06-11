@@ -136,7 +136,6 @@ async function getGlobalRank(){
     })
     .catch(error => {
         console.error('Error in getGlobalRank:', error);
-        // En cas d'erreur, ne pas afficher de classement incorrect
     });
 }
 
@@ -158,9 +157,19 @@ function displayGlobalRank(rank, total, grades = null) {
                 const itemPosition = clickableElement.getBoundingClientRect();
                 showHistogram(event, grades, userGrade, itemPosition, true);
             });
+            clickableElement.addEventListener('mouseout', function() {
+                setTimeout(() => {
+                    if (window.graphContainer && window.graphContainer.style.display === 'block') {
+                        const mouseOverGraph = window.graphContainer.matches(':hover');
+                        const mouseOverBridge = window.globalBridge && window.globalBridge.matches(':hover');
+                        if (!mouseOverGraph && !mouseOverBridge) {
+                            hideHistogram();
+                        }
+                    }
+                }, 50);
+            });
         }
     } else {
-        // Affichage simple sans histogramme
         avg.innerHTML = `${gradeText} <br/> ${rankText}`;
     }
 }
@@ -194,7 +203,6 @@ async function updateGlobalRank(){
         return response.json();
       })
       .then(data => {
-        // console.log('Response data:', data);
         if (data.rank && data.total) {
           displayGlobalRank(data.rank, data.total, data.grades);
         }

@@ -28,11 +28,18 @@ pointerHelper.appendChild(polygon);
 
 document.body.appendChild(pointerHelper);
 
-polygon.addEventListener('mouseover', function() {
+// Create a simple bridge for global histogram
+const globalBridge = document.createElement('div');
+globalBridge.style.position = 'absolute';
+globalBridge.style.display = 'none';
+globalBridge.style.backgroundColor = 'transparent';
+globalBridge.style.zIndex = "1";
+document.body.appendChild(globalBridge);
+
+globalBridge.addEventListener('mouseover', function() {
     graphContainer.style.display = 'block';
-    pointerHelper.style.display = 'block';
 });
-polygon.addEventListener('mouseout', function() {
+globalBridge.addEventListener('mouseout', function() {
     hideHistogram();
 });
 
@@ -81,6 +88,29 @@ function showHistogram(event, grades, userGrade, itemPosition, isGlobal = false)
         const elementCenterY = itemPosition.top + (itemPosition.height / 2);
         const histogramCenterY = elementCenterY - 2*(svgHeight / 2);
         graphContainer.style.top = `${histogramCenterY + window.scrollY}px`;
+
+        // Create bridge between clickable element and graph for global histogram
+        const bridgeLeft = itemPosition.right + window.scrollX;
+        const bridgeTop = Math.min(itemPosition.top, parseFloat(graphContainer.style.top) - window.scrollY) + window.scrollY;
+        const bridgeWidth = parseFloat(graphContainer.style.left) - bridgeLeft + 10; // +10 for overlap
+        const bridgeHeight = Math.max(itemPosition.height, svgHeight) + Math.abs(itemPosition.top - (parseFloat(graphContainer.style.top) - window.scrollY));
+
+        globalBridge.style.left = `${bridgeLeft}px`;
+        globalBridge.style.top = `${bridgeTop}px`;
+        globalBridge.style.width = `${bridgeWidth}px`;
+        globalBridge.style.height = `${bridgeHeight}px`;
+        globalBridge.style.display = 'block';
+
+        // --- Fix: Keep graph visible when mouse is over graphContainer for global graph ---
+        graphContainer.onmouseover = function() {
+            graphContainer.style.display = 'block';
+        };
+        graphContainer.onmouseout = function(e) {
+            // Only hide if mouse leaves the graphContainer and not entering a child
+            if (!graphContainer.contains(e.relatedTarget)) {
+                hideHistogram();
+            }
+        };
     } else {
         const rightEdge = event.pageX + svgWidth;
         if (rightEdge > document.documentElement.clientWidth) {
@@ -89,6 +119,9 @@ function showHistogram(event, grades, userGrade, itemPosition, isGlobal = false)
             graphContainer.style.left = `${event.pageX}px`;
         }
         graphContainer.style.top = `${itemPosition.bottom + window.scrollY + 3}px`;
+        globalBridge.style.display = 'none';
+        graphContainer.onmouseover = null;
+        graphContainer.onmouseout = null;
     }
     graphContainer.style.display = 'block';
     graphContainer.innerHTML = '';
@@ -311,4 +344,5 @@ function showHistogram(event, grades, userGrade, itemPosition, isGlobal = false)
 function hideHistogram() {
     graphContainer.style.display = 'none';
     pointerHelper.style.display = 'none';
+    globalBridge.style.display = 'none';
 }
