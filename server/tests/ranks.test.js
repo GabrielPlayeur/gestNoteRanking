@@ -192,6 +192,18 @@ describe("Ranks API", () => {
       process.env.GESTNOTE_SECRET = orig;
     });
 
+    it("should return 401 if HMAC signature is missing", async () => {
+      const payload = { hash: "testX", year: 2000, maquette: 1, departement: 101, grade: 10 };
+      const res = await request(app)
+        .post("/api/ranks")
+        .set('User-Agent', EXTENSION_USER_AGENT)
+        // No X-GestNote-Signature header
+        .send(payload);
+      expect(res.statusCode).toBe(401);
+      expect(res.body).toHaveProperty('error');
+      expect(res.body.error).toMatch(/HMAC/);
+    });
+
     it("should return 401 if HMAC signature is invalid", async () => {
       const payload = { hash: "testX", year: 2000, maquette: 1, departement: 101, grade: 10 };
       const res = await request(app)
@@ -241,6 +253,207 @@ describe("Ranks API", () => {
       expect(res.statusCode).toBe(500);
       expect(res.body).toHaveProperty('msg');
       ranksModel.findOneAndDelete = orig;
+    });
+
+    it("should log and handle zero grade submission", async () => {
+      const payload = {
+        hash: "test_zero",
+        year: 2000,
+        maquette: 1,
+        departement: 101,
+        grade: 0,
+      };
+      const payloadStr = JSON.stringify(payload);
+      const signature = getHMACSignature(payloadStr);
+      const res = await request(app)
+        .post("/api/ranks")
+        .set('User-Agent', EXTENSION_USER_AGENT)
+        .set('X-GestNote-Signature', signature)
+        .send(payload);
+      
+      expect(res.statusCode).toBe(201);
+      expect(res.body.user.grade.$numberDecimal).toBe("0");
+      
+      // Clean up
+      await ranksModel.deleteOne({ hash: "test_zero" });
+    });
+
+    it("should log and reject very high suspicious grades (>20)", async () => {
+      const payload = {
+        hash: "test_high",
+        year: 2000,
+        maquette: 1,
+        departement: 101,
+        grade: 21,
+      };
+      const payloadStr = JSON.stringify(payload);
+      const signature = getHMACSignature(payloadStr);
+      const res = await request(app)
+        .post("/api/ranks")
+        .set('User-Agent', EXTENSION_USER_AGENT)
+        .set('X-GestNote-Signature', signature)
+        .send(payload);
+      
+      expect(res.statusCode).toBe(400);
+      expect(res.body).toHaveProperty('error', 'Invalid data');
+    });
+
+    it("should log and reject negative grades", async () => {
+      const payload = {
+        hash: "test_negative",
+        year: 2000,
+        maquette: 1,
+        departement: 101,
+        grade: -5,
+      };
+      const payloadStr = JSON.stringify(payload);
+      const signature = getHMACSignature(payloadStr);
+      const res = await request(app)
+        .post("/api/ranks")
+        .set('User-Agent', EXTENSION_USER_AGENT)
+        .set('X-GestNote-Signature', signature)
+        .send(payload);
+      
+      expect(res.statusCode).toBe(400);
+      expect(res.body).toHaveProperty('error', 'Invalid data');
+    });
+
+    it("should log suspicious very high grade but allow it (19.8)", async () => {
+      const payload = {
+        hash: "test_suspicious_high",
+        year: 2000,
+        maquette: 1,
+        departement: 101,
+        grade: 19.8,
+      };
+      const payloadStr = JSON.stringify(payload);
+      const signature = getHMACSignature(payloadStr);
+      const res = await request(app)
+        .post("/api/ranks")
+        .set('User-Agent', EXTENSION_USER_AGENT)
+        .set('X-GestNote-Signature', signature)
+        .send(payload);
+      
+      expect(res.statusCode).toBe(201);
+      expect(res.body.user.grade.$numberDecimal).toBe("19.8");
+      
+      // Clean up
+      await ranksModel.deleteOne({ hash: "test_suspicious_high" });
+    });
+
+    it("should reject non-numeric values", async () => {
+      const payload = {
+        hash: "test_non_numeric",
+        year: "not_a_number",
+        maquette: 1,
+        departement: 101,
+        grade: 15,
+      };
+      const payloadStr = JSON.stringify(payload);
+      const signature = getHMACSignature(payloadStr);
+      const res = await request(app)
+        .post("/api/ranks")
+        .set('User-Agent', EXTENSION_USER_AGENT)
+        .set('X-GestNote-Signature', signature)
+        .send(payload);
+      
+      expect(res.statusCode).toBe(400);
+      expect(res.body).toHaveProperty('errors');
+      expect(Array.isArray(res.body.errors)).toBe(true);
+      expect(res.body.errors[0]).toHaveProperty('msg', 'Year must be an integer');
+    });
+
+    it("should reject non-numeric string values in validation", async () => {
+      const payload = {
+        hash: "test_non_numeric",
+        year: "not_a_number",
+        maquette: 1,
+        departement: 101,
+        grade: 15,
+      };
+      const payloadStr = JSON.stringify(payload);
+      const signature = getHMACSignature(payloadStr);
+      const res = await request(app)
+        .post("/api/ranks")
+        .set('User-Agent', EXTENSION_USER_AGENT)
+        .set('X-GestNote-Signature', signature)
+        .send(payload);
+      
+      expect(res.statusCode).toBe(400);
+      expect(res.body).toHaveProperty('errors');
+      expect(Array.isArray(res.body.errors)).toBe(true);
+      expect(res.body.errors[0]).toHaveProperty('msg', 'Year must be an integer');
+    });
+
+    it("should return 500 if MongoDB fails on POST/UPDATE", async () => {
+      const orig = ranksModel.exists;
+      ranksModel.exists = jest.fn().mockRejectedValue(new Error("Mongo fail"));
+      
+      const payload = {
+        hash: "test_mongo_fail",
+        year: 2000,
+        maquette: 1,
+        departement: 101,
+        grade: 15,
+      };
+      const payloadStr = JSON.stringify(payload);
+      const signature = getHMACSignature(payloadStr);
+      const res = await request(app)
+        .post("/api/ranks")
+        .set('User-Agent', EXTENSION_USER_AGENT)
+        .set('X-GestNote-Signature', signature)
+        .send(payload);
+      
+      expect(res.statusCode).toBe(500);
+      expect(res.body).toHaveProperty('msg');
+      ranksModel.exists = orig;
+    });
+
+    it("should return 500 if MongoDB fails during ranking calculation", async () => {
+      const origFind = ranksModel.find;
+      const origExists = ranksModel.exists;
+      const origFindOneAndUpdate = ranksModel.findOneAndUpdate;
+      
+      // Mock exists to return true (user exists)
+      ranksModel.exists = jest.fn().mockResolvedValue(true);
+      // Mock findOneAndUpdate to succeed for the user update
+      ranksModel.findOneAndUpdate = jest.fn().mockResolvedValue({
+        hash: "test_ranking_fail",
+        grade: { $numberDecimal: "15" }
+      });
+      // Mock find to fail on the second call (ranking calculation)
+      let callCount = 0;
+      ranksModel.find = jest.fn().mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          // First call should succeed (this might be for some initial check)
+          return Promise.resolve([]);
+        }
+        // Second call fails (ranking calculation)
+        return Promise.reject(new Error("Ranking calculation failed"));
+      });
+      
+      const payload = {
+        hash: "test_ranking_fail",
+        year: 2000,
+        maquette: 1,
+        departement: 101,
+        grade: 15,
+      };
+      const payloadStr = JSON.stringify(payload);
+      const signature = getHMACSignature(payloadStr);
+      const res = await request(app)
+        .post("/api/ranks")
+        .set('User-Agent', EXTENSION_USER_AGENT)
+        .set('X-GestNote-Signature', signature)
+        .send(payload);
+      
+      expect(res.statusCode).toBe(500);
+      expect(res.body).toHaveProperty('msg');
+      
+      ranksModel.find = origFind;
+      ranksModel.exists = origExists;
+      ranksModel.findOneAndUpdate = origFindOneAndUpdate;
     });
   });
 

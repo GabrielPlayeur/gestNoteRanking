@@ -84,10 +84,6 @@ const postUpdate = async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
     const { hash, year, maquette, departement, grade } = req.body;
-    if (isNaN(year) || isNaN(maquette) || isNaN(departement) || isNaN(grade)) {
-      SecurityLogger.logMalformedRequest(req, ['Invalid numeric values']);
-      return res.status(400).json({ error: "Invalid data" });
-    }
     const gradeNum = Number(grade);
     // Log pour note de 0 (comportement suspect)
     if (gradeNum === 0) {
