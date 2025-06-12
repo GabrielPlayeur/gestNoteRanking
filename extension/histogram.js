@@ -79,7 +79,7 @@ function showHistogram(event, grades, userGrade, itemPosition, isGlobal = false)
     const height = svgHeight - margin.top - margin.bottom;
 
     if (isGlobal) {
-        const rightPosition = itemPosition.right + window.scrollX + 5;
+        const rightPosition = itemPosition.right + window.scrollX + 15;
         if (rightPosition + svgWidth > document.documentElement.clientWidth + window.scrollX) {
             graphContainer.style.left = `${itemPosition.left + window.scrollX - svgWidth - 5}px`;
         } else {
@@ -87,13 +87,13 @@ function showHistogram(event, grades, userGrade, itemPosition, isGlobal = false)
         }
         const elementCenterY = itemPosition.top + (itemPosition.height / 2);
         const histogramCenterY = elementCenterY - 2*(svgHeight / 2);
-        graphContainer.style.top = `${histogramCenterY + window.scrollY}px`;
+        graphContainer.style.top = `${histogramCenterY + window.scrollY - 25}px`;
 
         // Create bridge between clickable element and graph for global histogram
         const bridgeLeft = itemPosition.right + window.scrollX;
         const bridgeTop = Math.min(itemPosition.top, parseFloat(graphContainer.style.top) - window.scrollY) + window.scrollY;
-        const bridgeWidth = parseFloat(graphContainer.style.left) - bridgeLeft + 10; // +10 for overlap
-        const bridgeHeight = Math.max(itemPosition.height, svgHeight) + Math.abs(itemPosition.top - (parseFloat(graphContainer.style.top) - window.scrollY));
+        const bridgeWidth = parseFloat(graphContainer.style.left) - bridgeLeft + 45; // +45 for overlap
+        const bridgeHeight = Math.max(itemPosition.height, svgHeight) + 45; // +45 for overlap
 
         globalBridge.style.left = `${bridgeLeft}px`;
         globalBridge.style.top = `${bridgeTop}px`;
