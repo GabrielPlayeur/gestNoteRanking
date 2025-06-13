@@ -4,3 +4,8 @@
 *.vscode
 *.log
 *.env
+node_modules
+coverage
+logs
+build
+dist

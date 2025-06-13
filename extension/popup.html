@@ -8,15 +8,25 @@
 </head>
 <body>
 
-  <h1>Gestnote Ranking</h1>
-  <div class="toggle-switch">
-    <span>Allow acces to grades</span>
-    <input type="checkbox" id="toggle" class="checkbox">
-    <label for="toggle" class="label"></label>
+  <div id="downgrade"></div>
+
+  <div id="powerup"></div>
+
+  <div id="main">
+    <h1 id="title">GestNote Ranking</h1>
+    <p class="hidden">je souhaite partager anonymement ma moyenne générale et recevoir mon classement relatif</p>
+    <a class="hidden" href="https://gestnote-ranking.onrender.com/privacy-policy" target="_blank" rel="noopener noreferrer">Politique de confidentialité</a>
+
+    <label class="switch hidden">
+      <input type="checkbox" id="toggle">
+      <span class="slider round"></span>
+    </label>
+
+    <div id="placeholder">
+      <p>Rendez-vous sur</p>
+      <a href="https://scolarite.polytech.univ-nantes.fr/" target="_blank" rel="noopener noreferrer">scolarite.polytech.univ-nantes.fr</a>
+    </div>
   </div>
-
-  <a href="http://localhost:5000/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
-
   <script src="popup.js"></script>
 </body>
 </html>

@@ -1,12 +1,15 @@
+const URL_SERVER = "https://gestnote-ranking.onrender.com"
+const globalExtensionVersion = '1.0.7';
+
 function getSemesterId() {
     var maq = document.getElementById("maq");
-    var semesterId = maq.options[maq.selectedIndex].value;
+    var semesterId = maq.tagName==='SELECT' ? maq.options[maq.selectedIndex].value:maq.getAttribute("value");
     return semesterId;
 }
 
 function getDepartementId() {
     var dpt = document.getElementById('dpt');
-    var departementId = dpt.getAttribute("value");
+    var departementId = dpt.tagName==='SELECT' ? dpt.options[dpt.selectedIndex].value:dpt.getAttribute("value");
     return departementId;
 }
 
@@ -16,11 +19,13 @@ function getUserName() {
 
 function getYear() {
     var maq = document.getElementById('maq');
-    return Number(maq[maq.selectedIndex].innerText.split('/')[0]);
+    var fullYear = maq.tagName==='SELECT' ? maq[maq.selectedIndex].innerText:maq.innerText;
+    return Number(fullYear.split('/')[0]);
 }
 
 function getGlobalGrade() {
-    return document.getElementById("avg").innerText.split('\n')[0];
+    var avg = document.getElementById("avg").innerText.split('\n')[0];
+    return isNaN(avg) || avg.trim() === '' ? '0' : avg;
 }
 
 function getAllSemesterGrades(data) {
@@ -63,13 +68,13 @@ function displayRank(allGrades) {
         let userGrade = parseFloat(gradesDiv[i].innerHTML);
         let [rank, numberOfSameNotes] = getPersonnalRank(grades, userGrade);
         if (grades.length == 0 || rank == -1) return;
-        gradesDiv[i].parentNode.after(createDivForDisplay(grades, rank, numberOfSameNotes));
+        gradesDiv[i].parentNode.after(createDivForDisplay(grades, userGrade, rank, numberOfSameNotes));
     }
     var items = document.querySelectorAll('.item');
     items.forEach(item => addDivListener(item));
 }
 
-function createDivForDisplay(grades, rank, numberOfSameNotes){
+function createDivForDisplay(grades, userGrade, rank, numberOfSameNotes){
     let element = document.createElement("div");
     element.className = "item";
     element.style.margin = "0px";
@@ -81,6 +86,12 @@ function createDivForDisplay(grades, rank, numberOfSameNotes){
         element.innerHTML = `<div class='rank'>${rank}-${rank+numberOfSameNotes-1}/${grades.length}</div>
                              <div class='pourcent'>${Math.round(rank/grades.length*10000)/100}-${Math.round((rank+numberOfSameNotes-1)/grades.length*10000)/100}%</div>`;
     }
+
+    element.addEventListener('mouseover', function(event) {
+        let itemPosition = element.getBoundingClientRect();
+        showHistogram(event, grades, userGrade, itemPosition);
+    });
+
     return element
 }
 
@@ -95,6 +106,14 @@ function addDivListener(item) {
     item.addEventListener('mouseout', function() {
         pourcent.style.display = 'none';
         rank.style.display = 'inline';
+        setTimeout(() => {
+            const mouseOverGraph = window.graphContainer && window.graphContainer.matches(':hover');
+            const mouseOverGlobalBridge = window.globalBridge && window.globalBridge.matches(':hover');
+            const mouseOverText = item.matches(':hover');
+            if (!mouseOverGraph && !mouseOverGlobalBridge && !mouseOverText) {
+                hideHistogram();
+            }
+        }, 100);
     });
 }
 
@@ -106,24 +125,69 @@ function getPersonnalRank(grades, studentGrade) {
 }
 
 async function getGlobalRank(){
-    var url = `http://localhost:5000/api/ranks/${await generateHash()}`;
+    var url = `${URL_SERVER}/api/ranks/${await generateHash()}`;
+    const extensionUserAgent = `GestNoteRanking/${globalExtensionVersion}`;
     fetch(url, {
-	    method: 'get'
+	    method: 'get',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Extension-User-Agent': extensionUserAgent
+        },
     })
-    .then(response => response.text())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.text();
+    })
     .then(str => JSON.parse(str))
     .then(data => {
-        displayGlobalRank(data.rank, data.total);
+        if (data.rank && data.total) {
+            displayGlobalRank(data.rank, data.total, data.grades);
+        }
     })
+    .catch(error => {
+        console.error('Error in getGlobalRank:', error);
+    });
 }
 
-function displayGlobalRank(rank, total) {
+function displayGlobalRank(rank, total, grades = null) {
     var avg = document.getElementById("avg");
-    avg.innerHTML = `${getGlobalGrade()} <br/> ${rank}/${total}`
+    const gradeText = getGlobalGrade();
+    const rankText = `${rank}/${total}`;
+    if (grades && grades.length > 0) {
+        avg.innerHTML = `${gradeText} <br/> <span class="global-rank-clickable" style="cursor: pointer; text-decoration: underline;">${rankText}</span>`;
+        const clickableElement = avg.querySelector('.global-rank-clickable');
+        if (clickableElement) {
+            clickableElement.addEventListener('click', function(event) {
+                const userGrade = parseFloat(gradeText) || 0;
+                const itemPosition = clickableElement.getBoundingClientRect();
+                showHistogram(event, grades, userGrade, itemPosition, true);
+            });
+            clickableElement.addEventListener('mouseover', function(event) {
+                const userGrade = parseFloat(gradeText) || 0;
+                const itemPosition = clickableElement.getBoundingClientRect();
+                showHistogram(event, grades, userGrade, itemPosition, true);
+            });
+            clickableElement.addEventListener('mouseout', function() {
+                setTimeout(() => {
+                    if (window.graphContainer && window.graphContainer.style.display === 'block') {
+                        const mouseOverGraph = window.graphContainer.matches(':hover');
+                        const mouseOverBridge = window.globalBridge && window.globalBridge.matches(':hover');
+                        if (!mouseOverGraph && !mouseOverBridge) {
+                            hideHistogram();
+                        }
+                    }
+                }, 50);
+            });
+        }
+    } else {
+        avg.innerHTML = `${gradeText} <br/> ${rankText}`;
+    }
 }
 
 async function updateGlobalRank(){
-    const url = "http://localhost:5000/api/ranks"
+    const url = `${URL_SERVER}/api/ranks`
     var hash = await generateHash()
     const data = {
         hash: hash,
@@ -132,25 +196,44 @@ async function updateGlobalRank(){
         departement: getDepartementId(),
         grade: getGlobalGrade()
     };
+    const payload = JSON.stringify(data);
+    const signature = await generateHMACSignature(payload);
+    const extensionUserAgent = `GestNoteRanking/${globalExtensionVersion}`;
     fetch(url, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-GestNote-Signature': signature,
+        'X-Extension-User-Agent': extensionUserAgent
       },
-      body: JSON.stringify(data)
+      body: payload
     })
       .then(response => {
         if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
+          throw new Error(`HTTP error! Status: ${response.status} ${response.statusText}`);
         }
         return response.json();
       })
       .then(data => {
-        console.log('Response data:', data);
+        if (data.rank && data.total) {
+          displayGlobalRank(data.rank, data.total, data.grades);
+        }
       })
       .catch(error => {
         console.error('Error:', error);
       });
+}
+
+async function generateHMACSignature(payload) {
+    const encoder = new TextEncoder();
+    const keyData = encoder.encode('658e02624f38c792ac9a97f2');
+    const cryptoKey = await window.crypto.subtle.importKey(
+        'raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+    );
+    const signatureBuffer = await window.crypto.subtle.sign(
+        'HMAC', cryptoKey, encoder.encode(payload)
+    );
+    return Array.from(new Uint8Array(signatureBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 async function generateHash() {
@@ -167,16 +250,67 @@ function removeGlobalRanking() {
     document.getElementById("avg").innerText = getGlobalGrade();
 }
 
+function updateInformationText(agree){
+    var informationText = document.getElementById('informationText');
+    if (informationText!=null){
+        informationText.innerHTML = createInformationText(agree);
+        return;
+    }
+    var informationText = createInformationDiv(agree);
+    var noteTab = document.getElementById('notetab');
+    noteTab.before(informationText);
+}
+
+function createInformationDiv(agree){
+    var informationDiv = document.createElement('div');
+    informationDiv.id = "informationText";
+    informationDiv.style.fontStyle = "italic";
+    informationDiv.style.marginBottom = "15px";
+    informationDiv.innerHTML = createInformationText(agree);
+    return informationDiv;
+}
+
+function createInformationText(agree){
+    var textStart = document.createElement('span');
+    textStart.innerText = "Partage de la moyenne: ";
+    var state = document.createElement('span');
+    state.innerText = agree == true ? "ACTIVE" : "DESACTIVE";
+    state.style.color = agree == true ? "green" : "red";
+    state.style.fontWeight = "bold";
+    var textHelp = document.createElement('span');
+    textHelp.innerHTML = "</br>Vous pouvez modifier ce paramètre depuis l'extension GestNote Ranking en accédant à l'onglet Extensions dans le coin supérieur droit de votre navigateur."
+    var textUsers = document.createElement('span');
+    textUsers.innerHTML = "</br>Votre classement est affiché en fonction des autres étudiants qui ont accepté de partager leur moyenne."
+    var textTime = document.createElement('span');
+    textTime.innerHTML = "</br>L'apparition du classement peut prendre un certain temps. Nous vous demandons d'être patient."
+    var div = document.createElement('div');
+    div.appendChild(textStart);
+    div.appendChild(state);
+    div.appendChild(textHelp);
+    div.appendChild(textUsers);
+    div.appendChild(textTime);
+    return div.innerHTML;
+}
+
 async function runGlobalRanking() {
     const agree = localStorage.getItem('allow')==="true";
+    updateInformationText(agree);
     if (!agree) return removeGlobalRanking();
-    await updateGlobalRank();
-    await getGlobalRank();
+    try {
+        await updateGlobalRank();
+    } catch (error) {
+        console.error('Error in updateGlobalRank:', error);
+        try {
+            await getGlobalRank();
+        } catch (getRankError) {
+            console.error('Error in getGlobalRank fallback:', getRankError);
+        }
+    }
 }
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     localStorage.setItem('allow', request.allow);
-    runGlobalRanking()
+    runGlobalRanking();
 });
 
 document.onchange = function () {
