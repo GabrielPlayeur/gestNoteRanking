@@ -1,5 +1,4 @@
-// const URL_SERVER = "https://gestnote-ranking.onrender.com"
-const URL_SERVER = "http://localhost:5000";
+const URL_SERVER = "https://gestnote-ranking.onrender.com"
 const globalExtensionVersion = '1.0.7';
 
 function getSemesterId() {
@@ -127,8 +126,13 @@ function getPersonnalRank(grades, studentGrade) {
 
 async function getGlobalRank(){
     var url = `${URL_SERVER}/api/ranks/${await generateHash()}`;
+    const extensionUserAgent = `GestNoteRanking/${globalExtensionVersion}`;
     fetch(url, {
-	    method: 'get'
+	    method: 'get',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Extension-User-Agent': extensionUserAgent
+        },
     })
     .then(response => {
         if (!response.ok) {
