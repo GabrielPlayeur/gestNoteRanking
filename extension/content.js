@@ -19,7 +19,7 @@ function getUserName() {
 
 function getYear() {
     var maq = document.getElementById('maq');
-    var fullYear = maq.tagName==='SELECT' ? maq[maq.selectedIndex].innerText:maq.innerText;
+    var fullYear = maq.tagName==='SELECT' ? maq.options[maq.selectedIndex].innerText:maq.innerText;
     return Number(fullYear.split('/')[0]);
 }
 
@@ -322,3 +322,10 @@ setTimeout(() => {
     getSemesterRanking(),
     runGlobalRanking()
   }, "1000");
+
+
+module.exports = {
+    getSemesterRanking,
+    getGlobalRank,
+    updateGlobalRank
+};
