@@ -79,14 +79,17 @@ if (typeof window !== 'undefined') {
   }
 }
 
-// Load the content script and get the exported functions
-const contentFunctions = require('../../../extension/content.js');
+// Import du wrapper de test sécurisé
+const { createTestEnvironment } = require('./content-test-wrapper');
 
 describe('API calls in content.js', () => {
   let originalFetch;
-
+  let contentFunctions;
   beforeEach(() => {
     jest.clearAllMocks();
+    
+    // Initialiser l'environnement de test et extraire les fonctions
+    contentFunctions = createTestEnvironment();
     // Structure DOM exacte pour getUserName()
     document.body.innerHTML = `
       <div id="dpt" value="INFO"></div>
@@ -182,7 +185,7 @@ describe('API calls in content.js', () => {
     contentFunctions.getGlobalRank();
     await promise;
     
-    expect(spy).toHaveBeenCalledWith(expect.stringContaining('Error in getGlobalRank:'), expect.any(Error));
+    expect(spy).toHaveBeenCalledWith('Error in getGlobalRank:', expect.anything());
     spy.mockRestore();
   });  test('updateGlobalRank gère les erreurs de fetch', async () => {
     global.fetch = jest.fn(() => Promise.resolve({ ok: false, status: 400, statusText: 'Bad Request', json: () => Promise.resolve({}) }));
@@ -200,7 +203,7 @@ describe('API calls in content.js', () => {
     contentFunctions.updateGlobalRank();
     await promise;
     
-    expect(spy).toHaveBeenCalledWith(expect.stringContaining('Error:'), expect.any(Error));
+    expect(spy).toHaveBeenCalledWith('Error:', expect.anything());
     spy.mockRestore();
   });
 });

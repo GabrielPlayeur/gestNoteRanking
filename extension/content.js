@@ -299,11 +299,11 @@ async function runGlobalRanking() {
     try {
         await updateGlobalRank();
     } catch (error) {
-        console.error('Error in updateGlobalRank:', error);
+        console.error('Error :', error);
         try {
             await getGlobalRank();
         } catch (getRankError) {
-            console.error('Error in getGlobalRank fallback:', getRankError);
+            console.error('Error :', getRankError);
         }
     }
 }
@@ -322,10 +322,3 @@ setTimeout(() => {
     getSemesterRanking(),
     runGlobalRanking()
   }, "1000");
-
-
-module.exports = {
-    getSemesterRanking,
-    getGlobalRank,
-    updateGlobalRank
-};
