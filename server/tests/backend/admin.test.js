@@ -1,11 +1,11 @@
 const request = require("supertest");
-const app = require("../app");
-const { ipBlocker } = require('../utils/ipBlocker');
-const SecurityLogAnalyzer = require('../utils/SecurityLogAnalyzer');
-const { SecurityLogger } = require('../utils/securityLogger');
+const app = require("../../app");
+const { ipBlocker } = require('../../utils/ipBlocker');
+const SecurityLogAnalyzer = require('../../utils/SecurityLogAnalyzer');
+const { SecurityLogger } = require('../../utils/securityLogger');
 
 // Mock dependencies
-jest.mock('../utils/ipBlocker', () => ({
+jest.mock('../../utils/ipBlocker', () => ({
   ipBlocker: {
     getStats: jest.fn(),
     isBlocked: jest.fn(),
@@ -14,8 +14,8 @@ jest.mock('../utils/ipBlocker', () => ({
     middleware: jest.fn(() => (req, res, next) => next())
   }
 }));
-jest.mock('../utils/SecurityLogAnalyzer');
-jest.mock('../utils/securityLogger');
+jest.mock('../../utils/SecurityLogAnalyzer');
+jest.mock('../../utils/securityLogger');
 
 describe("Admin Controller", () => {
   const validAdminToken = 'test-admin-token';

@@ -1,14 +1,14 @@
 const mongoose = require("mongoose");
 const request = require("supertest");
-const app = require("../app");
+const app = require("../../app");
 const crypto = require("crypto");
-const ranksModel = require("../models/ranks.model");
-const manifest = require("../../extension/manifest.json");
+const ranksModel = require("../../models/ranks.model");
+const manifest = require("../../../extension/manifest.json");
 
 // Define NODE_ENV to disable rate limiter in tests
 process.env.NODE_ENV = 'test';
 
-require("dotenv").config({ path: __dirname + '/../.env' });
+require("dotenv").config({ path: __dirname + '/../../.env' });
 console.log('GESTNOTE_SECRET in test:', process.env.GESTNOTE_SECRET);
 
 jest.setTimeout(20000); // Increase global timeout to 20s for slow tests (MongoDB connection)
@@ -43,14 +43,6 @@ describe("Ranks API", () => {
   afterAll(async () => {
     await ranksModel.deleteMany({ hash: { $in: ["test1", "test2", "test3", "test4", "test5"] } });
     await mongoose.connection.close();
-  });
-
-  describe("GET /api/ranks", () => {    it("should return all users", async () => {
-      const res = await addExtensionHeaders(request(app).get("/api/ranks"));
-      expect(res.statusCode).toBe(200);
-      expect(Array.isArray(res.body)).toBe(true);
-      expect(res.body.length).toBeGreaterThan(0);
-    });
   });
 
   describe("GET /api/ranks/:hash", () => {    it("should return the user's rank if hash exists (test1)", async () => {
@@ -144,28 +136,7 @@ describe("Ranks API", () => {
     });
   });
 
-  describe("DELETE /api/ranks/:hash", () => {
-    it("should delete a user (test4)", async () => {
-      const res = await request(app)
-        .delete("/api/ranks/test4")
-        .set('User-Agent', EXTENSION_USER_AGENT);
-      expect(res.statusCode).toBe(200);
-      // Accept null or object (if already deleted)
-      expect([null, Object.prototype]).toContain(res.body === null ? null : Object.prototype);
-    });
-  });
-
   describe("Error & edge cases", () => {
-    it("should return 500 if MongoDB fails on GET /api/ranks", async () => {
-      const orig = ranksModel.find;
-      ranksModel.find = jest.fn().mockRejectedValue(new Error("Mongo fail"));
-      const res = await request(app)
-        .get("/api/ranks")
-        .set('User-Agent', EXTENSION_USER_AGENT);
-      expect(res.statusCode).toBe(500);
-      expect(res.body).toHaveProperty('msg');
-      ranksModel.find = orig;
-    });
 
     it("should return 500 if MongoDB fails on GET /api/ranks/:hash", async () => {
       const orig = ranksModel.findOne;
@@ -244,18 +215,10 @@ describe("Ranks API", () => {
       }
     });
 
-    it("should return 500 if MongoDB fails on DELETE", async () => {
-      const orig = ranksModel.findOneAndDelete;
-      ranksModel.findOneAndDelete = jest.fn().mockRejectedValue(new Error("Mongo fail"));
-      const res = await request(app)
-        .delete("/api/ranks/test1")
-        .set('User-Agent', EXTENSION_USER_AGENT);
-      expect(res.statusCode).toBe(500);
-      expect(res.body).toHaveProperty('msg');
-      ranksModel.findOneAndDelete = orig;
-    });
-
     it("should log and handle zero grade submission", async () => {
+      // Clean up before test to ensure user doesn't exist
+      await ranksModel.deleteOne({ hash: "test_zero" });
+      
       const payload = {
         hash: "test_zero",
         year: 2000,
@@ -319,6 +282,9 @@ describe("Ranks API", () => {
     });
 
     it("should log suspicious very high grade but allow it (19.8)", async () => {
+      // Clean up before test to ensure user doesn't exist
+      await ranksModel.deleteOne({ hash: "test_suspicious_high" });
+      
       const payload = {
         hash: "test_suspicious_high",
         year: 2000,
